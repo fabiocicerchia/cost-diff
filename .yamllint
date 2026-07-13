@@ -1,0 +1,7 @@
+extends: relaxed
+
+rules:
+  # SHA-pinned `uses:` lines and their version comments run past 80 columns
+  # and cannot be wrapped; allow a bit more room.
+  line-length:
+    max: 120
