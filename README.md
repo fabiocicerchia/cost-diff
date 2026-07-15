@@ -24,10 +24,21 @@ $ cost-diff --last-month --top 5
 ...
 ```
 
+## Install
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/fabiocicerchia/cost-diff/main/install.sh | bash
+```
+
+Or with pipx directly:
+
+```sh
+pipx install git+https://github.com/fabiocicerchia/cost-diff
+```
+
 ## Usage
 
 ```sh
-pipx install .
 export AWS_PROFILE=billing      # needs ce:GetCostAndUsage
 
 cost-diff --last-month
