@@ -55,7 +55,7 @@ Core diffing/reporting is implemented and unit-tested (Cost Explorer client
 injectable/mocked). The deep end is edge cases:
 
 - [x] Credits/refunds/RI-amortization handling (`--metric` selection)
-- [ ] "Why" drill-down: auto-split biggest mover by USAGE_TYPE
+- [x] "Why" drill-down: auto-split biggest mover by USAGE_TYPE
 - [ ] Anomaly hints (weekday-normalized comparisons)
 - [ ] Slack Block Kit formatting
 

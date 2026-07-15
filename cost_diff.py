@@ -98,6 +98,23 @@ def render(rows, period, vs, top=10):
     return "\n".join(lines)
 
 
+def render_why(rows, group_label, top=5):
+    """Render a USAGE_TYPE breakdown explaining why `group_label` moved."""
+    lines = [
+        f"\n### Why {group_label} moved (by usage type)",
+        "",
+        "| change | usage type | before | after |",
+        "|---|---|---|---|",
+    ]
+    for r in rows[:top]:
+        pct = f" ({r['pct']:+.0f}%)" if r["pct"] is not None else " (new)"
+        lines.append(
+            f"| {'+' if r['delta'] > 0 else '−'}${abs(r['delta']):,.0f}{pct} "
+            f"| {r['group']} | ${r['before']:,.0f} | ${r['after']:,.0f} |"
+        )
+    return "\n".join(lines)
+
+
 def post_slack(webhook, text):
     if not webhook.startswith("https://"):
         raise ValueError("Slack webhook must be an https:// URL")
@@ -131,6 +148,11 @@ def main(argv=None):
     p.add_argument("--top", type=int, default=10)
     p.add_argument("--threshold", type=float, default=1.0, help="ignore changes under $N")
     p.add_argument("--slack", metavar="WEBHOOK", help="post the report to Slack")
+    p.add_argument(
+        "--why",
+        action="store_true",
+        help="drill down the biggest mover by USAGE_TYPE (only with --group SERVICE)",
+    )
     args = p.parse_args(argv)
 
     today = date.today()
@@ -146,6 +168,14 @@ def main(argv=None):
         args.threshold,
     )
     report = render(rows, period, vs, args.top)
+    if args.why and rows and args.group == "SERVICE":
+        biggest = rows[0]["group"]
+        why_rows = build_diff(
+            fetch_costs(vs, "USAGE_TYPE", metric=args.metric, filter_dimension=("SERVICE", biggest)),
+            fetch_costs(period, "USAGE_TYPE", metric=args.metric, filter_dimension=("SERVICE", biggest)),
+            args.threshold,
+        )
+        report += "\n" + render_why(why_rows, biggest)
     print(report)
     if args.slack:
         post_slack(args.slack, report)

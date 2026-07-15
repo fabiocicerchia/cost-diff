@@ -63,3 +63,27 @@ def test_fetch_costs_uses_selected_metric():
     from cost_diff import fetch_costs
 
     assert fetch_costs("2026-06", client=FakeCE(), metric="AmortizedCost") == {"EC2": 42.0}
+
+
+def test_fetch_costs_applies_filter_dimension():
+    class FakeCE:
+        def get_cost_and_usage(self, **kwargs):
+            assert kwargs["Filter"] == {"Dimensions": {"Key": "SERVICE", "Values": ["EC2"]}}
+            return {
+                "ResultsByTime": [
+                    {"Groups": [{"Keys": ["BoxUsage"], "Metrics": {"UnblendedCost": {"Amount": "7"}}}]}
+                ]
+            }
+
+    from cost_diff import fetch_costs
+
+    result = fetch_costs("2026-06", "USAGE_TYPE", client=FakeCE(), filter_dimension=("SERVICE", "EC2"))
+    assert result == {"BoxUsage": 7.0}
+
+
+def test_render_why_lists_usage_types():
+    from cost_diff import build_diff, render_why
+
+    rows = build_diff({"BoxUsage": 100.0}, {"BoxUsage": 300.0})
+    out = render_why(rows, "EC2")
+    assert "Why EC2 moved" in out and "BoxUsage" in out
