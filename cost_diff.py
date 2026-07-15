@@ -145,10 +145,37 @@ def render_why(rows, group_label, top=5):
     return "\n".join(lines)
 
 
-def post_slack(webhook, text):
+def render_slack_blocks(rows, period, vs, top=10):
+    """Render the report as Slack Block Kit blocks (mrkdwn, not GFM)."""
+    total_before = sum(r["before"] for r in rows)
+    total_after = sum(r["after"] for r in rows)
+    total_delta = total_after - total_before
+    arrow = "▲" if total_delta > 0 else "▼"
+    table_lines = [
+        f"{'+' if r['delta'] > 0 else '−'}${abs(r['delta']):,.0f}"
+        f"{' ⚠' if r.get('anomaly') else ''} {r['group']}: ${r['before']:,.0f} → ${r['after']:,.0f}"
+        for r in rows[:top]
+    ]
+    return {
+        "blocks": [
+            {"type": "header", "text": {"type": "plain_text", "text": f"AWS cost diff: {vs} → {period}"}},
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*Total:* ${total_before:,.0f} → ${total_after:,.0f} "
+                    f"({arrow} ${abs(total_delta):,.0f})",
+                },
+            },
+            {"type": "section", "text": {"type": "mrkdwn", "text": "```\n" + "\n".join(table_lines) + "\n```"}},
+        ]
+    }
+
+
+def post_slack(webhook, payload):
     if not webhook.startswith("https://"):
         raise ValueError("Slack webhook must be an https:// URL")
-    body = json.dumps({"text": text}).encode()
+    body = json.dumps(payload).encode()
     req = urllib.request.Request(webhook, data=body, headers={"Content-Type": "application/json"})
     urllib.request.urlopen(req, timeout=15)  # noqa: S310  # nosec B310  scheme checked above
 
@@ -210,7 +237,7 @@ def main(argv=None):
         report += "\n" + render_why(why_rows, biggest)
     print(report)
     if args.slack:
-        post_slack(args.slack, report)
+        post_slack(args.slack, render_slack_blocks(rows, period, vs, args.top))
     return 0
 
 

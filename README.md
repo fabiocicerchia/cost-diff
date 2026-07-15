@@ -57,7 +57,7 @@ injectable/mocked). The deep end is edge cases:
 - [x] Credits/refunds/RI-amortization handling (`--metric` selection)
 - [x] "Why" drill-down: auto-split biggest mover by USAGE_TYPE
 - [x] Anomaly hints (weekday-normalized comparisons)
-- [ ] Slack Block Kit formatting
+- [x] Slack Block Kit formatting
 
 ## Development
 

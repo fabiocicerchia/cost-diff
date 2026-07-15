@@ -28,6 +28,18 @@ def test_no_anomaly_field_set_without_periods():
     assert rows[0]["anomaly"] is False
 
 
+def test_render_slack_blocks_uses_mrkdwn_not_gfm():
+    from cost_diff import render_slack_blocks
+
+    rows = build_diff({"EC2": 100.0}, {"EC2": 250.0})
+    payload = render_slack_blocks(rows, "2026-06", "2026-05")
+    blocks = payload["blocks"]
+    assert blocks[0]["text"]["text"] == "AWS cost diff: 2026-05 → 2026-06"
+    total_text = blocks[1]["text"]["text"]
+    assert total_text.startswith("*Total:*") and "**" not in total_text
+    assert "EC2" in blocks[2]["text"]["text"]
+
+
 def test_diff_sorted_by_magnitude_and_thresholded():
     rows = build_diff(
         {"EC2": 1000.0, "S3": 50.0, "Athena": 10.0},
