@@ -48,3 +48,18 @@ def test_fetch_costs_pagination_shape():
     from cost_diff import fetch_costs
 
     assert fetch_costs("2026-06", client=FakeCE()) == {"EC2": 15.0}
+
+
+def test_fetch_costs_uses_selected_metric():
+    class FakeCE:
+        def get_cost_and_usage(self, **kwargs):
+            assert kwargs["Metrics"] == ["AmortizedCost"]
+            return {
+                "ResultsByTime": [
+                    {"Groups": [{"Keys": ["EC2"], "Metrics": {"AmortizedCost": {"Amount": "42"}}}]}
+                ]
+            }
+
+    from cost_diff import fetch_costs
+
+    assert fetch_costs("2026-06", client=FakeCE(), metric="AmortizedCost") == {"EC2": 42.0}

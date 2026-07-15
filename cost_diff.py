@@ -24,8 +24,12 @@ def previous_month(yyyy_mm):
     return f"{y - 1}-12" if m == 1 else f"{y}-{m - 1:02d}"
 
 
-def fetch_costs(period, group_by="SERVICE", client=None):
-    """Return {group: cost_usd} for a YYYY-MM period from Cost Explorer."""
+def fetch_costs(period, group_by="SERVICE", client=None, metric="UnblendedCost", filter_dimension=None):
+    """Return {group: cost_usd} for a YYYY-MM period from Cost Explorer.
+
+    filter_dimension, if given, is a (key, value) pair restricting the query
+    (e.g. narrowing a USAGE_TYPE breakdown to a single SERVICE).
+    """
     if client is None:
         import boto3
 
@@ -36,16 +40,19 @@ def fetch_costs(period, group_by="SERVICE", client=None):
         kwargs = {
             "TimePeriod": {"Start": start.isoformat(), "End": end.isoformat()},
             "Granularity": "MONTHLY",
-            "Metrics": ["UnblendedCost"],
+            "Metrics": [metric],
             "GroupBy": [{"Type": "DIMENSION", "Key": group_by}],
         }
+        if filter_dimension:
+            key, value = filter_dimension
+            kwargs["Filter"] = {"Dimensions": {"Key": key, "Values": [value]}}
         if token:
             kwargs["NextPageToken"] = token
         resp = client.get_cost_and_usage(**kwargs)
         for row in resp["ResultsByTime"]:
             for group in row.get("Groups", []):
                 key = group["Keys"][0]
-                amount = float(group["Metrics"]["UnblendedCost"]["Amount"])
+                amount = float(group["Metrics"][metric]["Amount"])
                 results[key] = results.get(key, 0.0) + amount
         token = resp.get("NextPageToken")
         if not token:
@@ -114,6 +121,13 @@ def main(argv=None):
     p.add_argument(
         "--group", default="SERVICE", choices=["SERVICE", "LINKED_ACCOUNT", "USAGE_TYPE", "REGION"]
     )
+    p.add_argument(
+        "--metric",
+        default="UnblendedCost",
+        choices=["UnblendedCost", "BlendedCost", "NetUnblendedCost", "AmortizedCost", "NetAmortizedCost"],
+        help="Cost Explorer metric; Net* nets out credits/refunds, "
+        "Amortized* spreads RI/Savings Plan cost over its term",
+    )
     p.add_argument("--top", type=int, default=10)
     p.add_argument("--threshold", type=float, default=1.0, help="ignore changes under $N")
     p.add_argument("--slack", metavar="WEBHOOK", help="post the report to Slack")
@@ -126,7 +140,11 @@ def main(argv=None):
         period = args.period
     vs = args.vs or previous_month(period)
 
-    rows = build_diff(fetch_costs(vs, args.group), fetch_costs(period, args.group), args.threshold)
+    rows = build_diff(
+        fetch_costs(vs, args.group, metric=args.metric),
+        fetch_costs(period, args.group, metric=args.metric),
+        args.threshold,
+    )
     report = render(rows, period, vs, args.top)
     print(report)
     if args.slack:
