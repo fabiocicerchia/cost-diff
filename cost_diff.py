@@ -59,8 +59,25 @@ def fetch_costs(period, group_by="SERVICE", client=None, metric="UnblendedCost",
             return results
 
 
-def build_diff(old, new, threshold_usd=1.0):
-    """Merge two cost maps into sorted change rows."""
+def weekday_count(yyyy_mm):
+    """Number of Mon-Fri days in a YYYY-MM period."""
+    y, m = (int(x) for x in yyyy_mm.split("-"))
+    days_in_month = calendar.monthrange(y, m)[1]
+    return sum(1 for d in range(1, days_in_month + 1) if date(y, m, d).weekday() < 5)
+
+
+def build_diff(old, new, threshold_usd=1.0, old_period=None, new_period=None):
+    """Merge two cost maps into sorted change rows.
+
+    If old_period/new_period are given, flags rows whose % change isn't
+    explained by the difference in business-day count between the two
+    periods (a naive but cheap anomaly hint).
+    """
+    weekday_ratio = None
+    if old_period and new_period:
+        old_weekdays = weekday_count(old_period)
+        if old_weekdays:
+            weekday_ratio = weekday_count(new_period) / old_weekdays
     rows = []
     for key in sorted(old.keys() | new.keys()):
         before, after = old.get(key, 0.0), new.get(key, 0.0)
@@ -68,7 +85,13 @@ def build_diff(old, new, threshold_usd=1.0):
         if abs(delta) < threshold_usd:
             continue
         pct = (delta / before * 100) if before else None
-        rows.append({"group": key, "before": before, "after": after, "delta": delta, "pct": pct})
+        anomaly = False
+        if weekday_ratio is not None and pct is not None:
+            expected_pct = (weekday_ratio - 1) * 100
+            anomaly = abs(pct) > 10 and abs(pct - expected_pct) > 20
+        rows.append(
+            {"group": key, "before": before, "after": after, "delta": delta, "pct": pct, "anomaly": anomaly}
+        )
     rows.sort(key=lambda r: -abs(r["delta"]))
     return rows
 
@@ -86,15 +109,22 @@ def render(rows, period, vs, top=10):
         "| change | service | before | after |",
         "|---|---|---|---|",
     ]
+    any_anomaly = False
     for r in rows[:top]:
         pct = f" ({r['pct']:+.0f}%)" if r["pct"] is not None else " (new)"
+        flag = ""
+        if r.get("anomaly"):
+            flag = " ⚠"
+            any_anomaly = True
         lines.append(
-            f"| {'+' if r['delta'] > 0 else '−'}${abs(r['delta']):,.0f}{pct} "
+            f"| {'+' if r['delta'] > 0 else '−'}${abs(r['delta']):,.0f}{pct}{flag} "
             f"| {r['group']} | ${r['before']:,.0f} | ${r['after']:,.0f} |"
         )
     hidden = len(rows) - top
     if hidden > 0:
         lines.append(f"\n…and {hidden} smaller changes below the threshold.")
+    if any_anomaly:
+        lines.append("\n⚠ = change not explained by the business-day-count difference between periods.")
     return "\n".join(lines)
 
 
@@ -166,6 +196,8 @@ def main(argv=None):
         fetch_costs(vs, args.group, metric=args.metric),
         fetch_costs(period, args.group, metric=args.metric),
         args.threshold,
+        old_period=vs,
+        new_period=period,
     )
     report = render(rows, period, vs, args.top)
     if args.why and rows and args.group == "SERVICE":

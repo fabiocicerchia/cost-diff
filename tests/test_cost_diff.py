@@ -1,9 +1,31 @@
-from cost_diff import build_diff, month_bounds, previous_month, render
+from cost_diff import build_diff, month_bounds, previous_month, render, weekday_count
 
 
 def test_month_arithmetic():
     assert previous_month("2026-01") == "2025-12"
     assert month_bounds("2026-02")[1].day == 28
+
+
+def test_weekday_count():
+    assert weekday_count("2026-06") == 22  # June 2026: 30 days, 8 weekend days
+
+
+def test_anomaly_flags_unexplained_swings_same_weekday_count():
+    # same period twice -> weekday ratio 1 -> expected pct is 0
+    rows = build_diff(
+        {"EC2": 100.0, "S3": 100.0},
+        {"EC2": 1000.0, "S3": 115.0},
+        old_period="2026-06",
+        new_period="2026-06",
+    )
+    by_group = {r["group"]: r for r in rows}
+    assert by_group["EC2"]["anomaly"] is True  # +900%, nothing explains that
+    assert by_group["S3"]["anomaly"] is False  # +15%, below the noise floor
+
+
+def test_no_anomaly_field_set_without_periods():
+    rows = build_diff({"EC2": 100.0}, {"EC2": 1000.0})
+    assert rows[0]["anomaly"] is False
 
 
 def test_diff_sorted_by_magnitude_and_thresholded():
