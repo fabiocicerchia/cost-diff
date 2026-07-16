@@ -49,16 +49,6 @@ cost-diff --last-month --slack "$SLACK_WEBHOOK"     # monthly cron
 IAM: `ce:GetCostAndUsage` only. Cost Explorer calls cost $0.01 each — a
 monthly run is effectively free.
 
-## Status & roadmap
-
-Core diffing/reporting is implemented and unit-tested (Cost Explorer client
-injectable/mocked). The deep end is edge cases:
-
-- [x] Credits/refunds/RI-amortization handling (`--metric` selection)
-- [x] "Why" drill-down: auto-split biggest mover by USAGE_TYPE
-- [x] Anomaly hints (weekday-normalized comparisons)
-- [x] Slack Block Kit formatting
-
 ## Development
 
 `make dev` then `make test` / `make lint`. Full docs live in [`docs/`](docs/);
