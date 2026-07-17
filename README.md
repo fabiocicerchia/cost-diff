@@ -4,6 +4,8 @@
 [![Security](https://github.com/fabiocicerchia/cost-diff/actions/workflows/security.yml/badge.svg)](https://github.com/fabiocicerchia/cost-diff/actions/workflows/security.yml)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/fabiocicerchia/cost-diff/badge)](https://securityscorecards.dev/viewer/?uri=github.com/fabiocicerchia/cost-diff)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Ffabiocicerchia%2Fcost-diff.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Ffabiocicerchia%2Fcost-diff?ref=badge_shield)
+[![Release](https://img.shields.io/github/v/release/fabiocicerchia/cost-diff)](https://github.com/fabiocicerchia/cost-diff/releases)
 
 Diffs two **AWS Cost Explorer** periods into a human-readable
 **"what changed and why"** report — sorted by absolute impact, new services
@@ -22,10 +24,21 @@ $ cost-diff --last-month --top 5
 ...
 ```
 
+## Install
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/fabiocicerchia/cost-diff/main/install.sh | bash
+```
+
+Or with pipx directly:
+
+```sh
+pipx install git+https://github.com/fabiocicerchia/cost-diff
+```
+
 ## Usage
 
 ```sh
-pipx install .
 export AWS_PROFILE=billing      # needs ce:GetCostAndUsage
 
 cost-diff --last-month
@@ -35,16 +48,6 @@ cost-diff --last-month --slack "$SLACK_WEBHOOK"     # monthly cron
 
 IAM: `ce:GetCostAndUsage` only. Cost Explorer calls cost $0.01 each — a
 monthly run is effectively free.
-
-## Status & roadmap
-
-Core diffing/reporting is implemented and unit-tested (Cost Explorer client
-injectable/mocked). The deep end is edge cases:
-
-- [ ] Credits/refunds/RI-amortization handling (`--metric` selection)
-- [ ] "Why" drill-down: auto-split biggest mover by USAGE_TYPE
-- [ ] Anomaly hints (weekday-normalized comparisons)
-- [ ] Slack Block Kit formatting
 
 ## Development
 
