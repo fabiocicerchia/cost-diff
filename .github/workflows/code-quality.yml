@@ -31,7 +31,7 @@ jobs:
         uses: crate-ci/typos@3bc303c295c081add5df4a4d52a1e117f2fb2dce  # master
 
       # pre-commit runs the hooks defined in .pre-commit-config.yaml (ruff, etc.).
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
         with:
           python-version: "3.x"
       - name: pre-commit
