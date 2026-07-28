@@ -11,7 +11,7 @@ import calendar
 import json
 import sys
 import urllib.request
-from datetime import date
+from datetime import date, datetime, timezone
 
 
 def month_bounds(yyyy_mm):
@@ -212,12 +212,8 @@ def post_slack(webhook, payload):
     if not webhook.startswith("https://"):
         raise ValueError("Slack webhook must be an https:// URL")
     body = json.dumps(payload).encode()
-    req = urllib.request.Request(
-        webhook, data=body, headers={"Content-Type": "application/json"}
-    )
-    urllib.request.urlopen(
-        req, timeout=15
-    )  # noqa: S310  # nosec B310  scheme checked above
+    req = urllib.request.Request(webhook, data=body, headers={"Content-Type": "application/json"})
+    urllib.request.urlopen(req, timeout=15)  # nosec B310  scheme checked above
 
 
 def main(argv=None):
@@ -257,9 +253,7 @@ def main(argv=None):
         "Amortized* spreads RI/Savings Plan cost over its term",
     )
     p.add_argument("--top", type=int, default=10)
-    p.add_argument(
-        "--threshold", type=float, default=1.0, help="ignore changes under $N"
-    )
+    p.add_argument("--threshold", type=float, default=1.0, help="ignore changes under $N")
     p.add_argument("--slack", metavar="WEBHOOK", help="post the report to Slack")
     p.add_argument(
         "--why",
@@ -268,7 +262,7 @@ def main(argv=None):
     )
     args = p.parse_args(argv)
 
-    today = date.today()
+    today = datetime.now(tz=timezone.utc).date()
     if args.last_month:
         period = previous_month(f"{today.year}-{today.month:02d}")
     else:

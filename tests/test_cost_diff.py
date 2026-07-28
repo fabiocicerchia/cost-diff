@@ -147,17 +147,13 @@ def test_fetch_costs_uses_selected_metric():
 
     from cost_diff import fetch_costs
 
-    assert fetch_costs("2026-06", client=FakeCE(), metric="AmortizedCost") == {
-        "EC2": 42.0
-    }
+    assert fetch_costs("2026-06", client=FakeCE(), metric="AmortizedCost") == {"EC2": 42.0}
 
 
 def test_fetch_costs_applies_filter_dimension():
     class FakeCE:
         def get_cost_and_usage(self, **kwargs):
-            assert kwargs["Filter"] == {
-                "Dimensions": {"Key": "SERVICE", "Values": ["EC2"]}
-            }
+            assert kwargs["Filter"] == {"Dimensions": {"Key": "SERVICE", "Values": ["EC2"]}}
             return {
                 "ResultsByTime": [
                     {
