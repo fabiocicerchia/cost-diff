@@ -1,9 +1,14 @@
+from datetime import date
+
 from cost_diff import build_diff, month_bounds, previous_month, render, weekday_count
 
 
 def test_month_arithmetic():
     assert previous_month("2026-01") == "2025-12"
-    assert month_bounds("2026-02")[1].day == 28
+    # End is exclusive per the Cost Explorer API: the day *after* the last day
+    # of the month, so a TimePeriod covering Feb 2026 includes Feb 28 itself.
+    assert month_bounds("2026-02") == (date(2026, 2, 1), date(2026, 3, 1))
+    assert month_bounds("2026-12")[1] == date(2027, 1, 1)
 
 
 def test_weekday_count():
@@ -45,7 +50,10 @@ def test_diff_sorted_by_magnitude_and_thresholded():
         {"EC2": 1000.0, "S3": 50.0, "Athena": 10.0},
         {"EC2": 1400.0, "S3": 49.5, "RDS": 200.0, "Athena": 10.0},
     )
-    assert [r["group"] for r in rows] == ["EC2", "RDS"]  # S3 under threshold, Athena unchanged
+    assert [r["group"] for r in rows] == [
+        "EC2",
+        "RDS",
+    ]  # S3 under threshold, Athena unchanged
     assert rows[1]["pct"] is None  # new service has no baseline pct
 
 
@@ -53,6 +61,32 @@ def test_render_contains_totals_and_table():
     rows = build_diff({"EC2": 100.0}, {"EC2": 250.0})
     out = render(rows, "2026-06", "2026-05")
     assert "2026-05 → 2026-06" in out and "| EC2 |" in out and "▲ $150" in out
+
+
+def test_render_zero_net_change_uses_neutral_arrow():
+    rows = build_diff({"EC2": 100.0, "S3": 100.0}, {"EC2": 150.0, "S3": 50.0})
+    out = render(rows, "2026-06", "2026-05")
+    assert "→ $0" in out
+
+
+def test_render_hidden_rows_message_blames_top_not_threshold():
+    rows = build_diff(
+        {"A": 100.0, "B": 100.0, "C": 100.0},
+        {"A": 600.0, "B": 600.0, "C": 600.0},
+    )
+    out = render(rows, "2026-06", "2026-05", top=1)
+    assert "above the threshold, not shown" in out
+
+
+def test_fetch_costs_sends_exclusive_end_date():
+    class FakeCE:
+        def get_cost_and_usage(self, **kwargs):
+            assert kwargs["TimePeriod"] == {"Start": "2026-02-01", "End": "2026-03-01"}
+            return {"ResultsByTime": []}
+
+    from cost_diff import fetch_costs
+
+    fetch_costs("2026-02", client=FakeCE())
 
 
 def test_fetch_costs_pagination_shape():
@@ -67,7 +101,10 @@ def test_fetch_costs_pagination_shape():
                     "ResultsByTime": [
                         {
                             "Groups": [
-                                {"Keys": ["EC2"], "Metrics": {"UnblendedCost": {"Amount": "10"}}}
+                                {
+                                    "Keys": ["EC2"],
+                                    "Metrics": {"UnblendedCost": {"Amount": "10"}},
+                                }
                             ]
                         }
                     ],
@@ -75,7 +112,14 @@ def test_fetch_costs_pagination_shape():
                 }
             return {
                 "ResultsByTime": [
-                    {"Groups": [{"Keys": ["EC2"], "Metrics": {"UnblendedCost": {"Amount": "5"}}}]}
+                    {
+                        "Groups": [
+                            {
+                                "Keys": ["EC2"],
+                                "Metrics": {"UnblendedCost": {"Amount": "5"}},
+                            }
+                        ]
+                    }
                 ]
             }
 
@@ -90,28 +134,48 @@ def test_fetch_costs_uses_selected_metric():
             assert kwargs["Metrics"] == ["AmortizedCost"]
             return {
                 "ResultsByTime": [
-                    {"Groups": [{"Keys": ["EC2"], "Metrics": {"AmortizedCost": {"Amount": "42"}}}]}
+                    {
+                        "Groups": [
+                            {
+                                "Keys": ["EC2"],
+                                "Metrics": {"AmortizedCost": {"Amount": "42"}},
+                            }
+                        ]
+                    }
                 ]
             }
 
     from cost_diff import fetch_costs
 
-    assert fetch_costs("2026-06", client=FakeCE(), metric="AmortizedCost") == {"EC2": 42.0}
+    assert fetch_costs("2026-06", client=FakeCE(), metric="AmortizedCost") == {
+        "EC2": 42.0
+    }
 
 
 def test_fetch_costs_applies_filter_dimension():
     class FakeCE:
         def get_cost_and_usage(self, **kwargs):
-            assert kwargs["Filter"] == {"Dimensions": {"Key": "SERVICE", "Values": ["EC2"]}}
+            assert kwargs["Filter"] == {
+                "Dimensions": {"Key": "SERVICE", "Values": ["EC2"]}
+            }
             return {
                 "ResultsByTime": [
-                    {"Groups": [{"Keys": ["BoxUsage"], "Metrics": {"UnblendedCost": {"Amount": "7"}}}]}
+                    {
+                        "Groups": [
+                            {
+                                "Keys": ["BoxUsage"],
+                                "Metrics": {"UnblendedCost": {"Amount": "7"}},
+                            }
+                        ]
+                    }
                 ]
             }
 
     from cost_diff import fetch_costs
 
-    result = fetch_costs("2026-06", "USAGE_TYPE", client=FakeCE(), filter_dimension=("SERVICE", "EC2"))
+    result = fetch_costs(
+        "2026-06", "USAGE_TYPE", client=FakeCE(), filter_dimension=("SERVICE", "EC2")
+    )
     assert result == {"BoxUsage": 7.0}
 
 
