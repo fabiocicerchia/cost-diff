@@ -111,11 +111,21 @@ def build_diff(old, new, threshold_usd=1.0, old_period=None, new_period=None):
     return rows
 
 
-def render(rows, period, vs, top=10):
+def _totals(rows):
+    """(total_before, total_after, total_delta, trend arrow) across all rows."""
     total_before = sum(r["before"] for r in rows)
     total_after = sum(r["after"] for r in rows)
     total_delta = total_after - total_before
     arrow = "▲" if total_delta > 0 else "▼" if total_delta < 0 else "→"
+    return total_before, total_after, total_delta, arrow
+
+
+def _pct_str(r):
+    return f" ({r['pct']:+.0f}%)" if r["pct"] is not None else " (new)"
+
+
+def render(rows, period, vs, top=10):
+    total_before, total_after, total_delta, arrow = _totals(rows)
     lines = [
         f"# AWS cost diff: {vs} → {period}",
         "",
@@ -126,7 +136,7 @@ def render(rows, period, vs, top=10):
     ]
     any_anomaly = False
     for r in rows[:top]:
-        pct = f" ({r['pct']:+.0f}%)" if r["pct"] is not None else " (new)"
+        pct = _pct_str(r)
         flag = ""
         if r.get("anomaly"):
             flag = " ⚠"
@@ -154,7 +164,7 @@ def render_why(rows, group_label, top=5):
         "|---|---|---|---|",
     ]
     for r in rows[:top]:
-        pct = f" ({r['pct']:+.0f}%)" if r["pct"] is not None else " (new)"
+        pct = _pct_str(r)
         lines.append(
             f"| {'+' if r['delta'] > 0 else '−'}${abs(r['delta']):,.0f}{pct} "
             f"| {r['group']} | ${r['before']:,.0f} | ${r['after']:,.0f} |"
@@ -164,10 +174,7 @@ def render_why(rows, group_label, top=5):
 
 def render_slack_blocks(rows, period, vs, top=10):
     """Render the report as Slack Block Kit blocks (mrkdwn, not GFM)."""
-    total_before = sum(r["before"] for r in rows)
-    total_after = sum(r["after"] for r in rows)
-    total_delta = total_after - total_before
-    arrow = "▲" if total_delta > 0 else "▼" if total_delta < 0 else "→"
+    total_before, total_after, total_delta, arrow = _totals(rows)
     table_lines = [
         f"{'+' if r['delta'] > 0 else '−'}${abs(r['delta']):,.0f}"
         f"{' ⚠' if r.get('anomaly') else ''} {r['group']}: ${r['before']:,.0f} → ${r['after']:,.0f}"
