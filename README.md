@@ -53,6 +53,10 @@ monthly run is effectively free.
 `make dev` then `make test` / `make lint`. Full docs live in [`docs/`](docs/);
 runnable examples in [`examples/`](examples/).
 
+## Documentation
+
+Full docs live in [`docs/`](docs/). Runnable examples live in [`examples/`](examples/).
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md). By participating you agree to the
