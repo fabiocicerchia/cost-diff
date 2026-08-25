@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0](https://github.com/fabiocicerchia/cost-diff/compare/v0.1.2...v0.2.0) (2026-08-25)
+
+
+### Features
+
+* **docs:** build the docs site in Actions and drop Read the Docs ([#43](https://github.com/fabiocicerchia/cost-diff/issues/43)) ([62d9925](https://github.com/fabiocicerchia/cost-diff/commit/62d9925c46f0af79fdaaaa12587a68bc9cf5a350))
+
+
+### Bug Fixes
+
+* **ci:** compute the next release PR after the draft is published ([#40](https://github.com/fabiocicerchia/cost-diff/issues/40)) ([8c1a336](https://github.com/fabiocicerchia/cost-diff/commit/8c1a33649289b8bfb8b57b99dddfa7adcebbcb58))
+
 ## [0.1.2](https://github.com/fabiocicerchia/cost-diff/compare/v0.1.1...v0.1.2) (2026-08-13)
 
 
