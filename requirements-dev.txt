@@ -4,9 +4,9 @@ boto3==1.43.70 \
     --hash=sha256:4f1e16b9eebbad3f312bb6fbf7685d40abdd52a691485cb9f09e7df60d912b41 \
     --hash=sha256:b9399cce51bec9552e61a6b85015c42dea68752e79c00a7005d84eaf7ee15fef
     # via cost-diff (pyproject.toml)
-botocore==1.43.70 \
-    --hash=sha256:95bc23a6472f8876349ae334b526e66006f6cf3c87bf39d3e9f057dc8c2eb85f \
-    --hash=sha256:a7bebdd0b1c8265e72759a4f7f61e9e43d57968b2c2a5e1e7b350d0a1e3ce81c
+botocore==1.43.74 \
+    --hash=sha256:5793d9170b2b9f3194fb6f667feed8986eb81f767528d52ceaf45df2242d56e9 \
+    --hash=sha256:b127b24d49532b5d7b0851b4abb3d3b99f58a121f87f07c23dac7c4d88b25c72
     # via
     #   boto3
     #   s3transfer
