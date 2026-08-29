@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cost-diff"
-version = "0.2.0"
+version = "0.2.1"
 description = "Diff two AWS Cost Explorer periods into a human-readable what-changed report"
 readme = "README.md"
 license = { text = "Apache-2.0" }
