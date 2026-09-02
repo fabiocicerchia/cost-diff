@@ -13,6 +13,28 @@ import sys
 import urllib.request
 from datetime import date, datetime, timezone
 
+# Cost Explorer is a global service: its only endpoint lives in us-east-1,
+# whatever region the caller's profile points at.
+CE_REGION = "us-east-1"
+
+SERVICE_DIMENSION = "SERVICE"
+USAGE_TYPE_DIMENSION = "USAGE_TYPE"
+GROUP_DIMENSIONS = [SERVICE_DIMENSION, "LINKED_ACCOUNT", USAGE_TYPE_DIMENSION, "REGION"]
+
+DEFAULT_METRIC = "UnblendedCost"
+COST_METRICS = [
+    DEFAULT_METRIC,
+    "BlendedCost",
+    "NetUnblendedCost",
+    "AmortizedCost",
+    "NetAmortizedCost",
+]
+
+# A row is flagged when the swing is big enough to care about and sits further
+# than this tolerance away from what the business-day-count difference explains.
+ANOMALY_MIN_PCT = 10
+ANOMALY_TOLERANCE_PCT = 20
+
 
 def month_bounds(yyyy_mm):
     y, m = (int(x) for x in yyyy_mm.split("-"))
@@ -28,9 +50,9 @@ def previous_month(yyyy_mm):
 
 def fetch_costs(
     period,
-    group_by="SERVICE",
+    group_by=SERVICE_DIMENSION,
     client=None,
-    metric="UnblendedCost",
+    metric=DEFAULT_METRIC,
     filter_dimension=None,
 ):
     """Return {group: cost_usd} for a YYYY-MM period from Cost Explorer.
@@ -41,7 +63,7 @@ def fetch_costs(
     if client is None:
         import boto3
 
-        client = boto3.client("ce", region_name="us-east-1")
+        client = boto3.client("ce", region_name=CE_REGION)
     start, end = month_bounds(period)
     results, token = {}, None
     while True:
@@ -96,7 +118,7 @@ def build_diff(old, new, threshold_usd=1.0, old_period=None, new_period=None):
         anomaly = False
         if weekday_ratio is not None and pct is not None:
             expected_pct = (weekday_ratio - 1) * 100
-            anomaly = abs(pct) > 10 and abs(pct - expected_pct) > 20
+            anomaly = abs(pct) > ANOMALY_MIN_PCT and abs(pct - expected_pct) > ANOMALY_TOLERANCE_PCT
         rows.append(
             {
                 "group": key,
@@ -236,19 +258,13 @@ def main(argv=None):
     )
     p.add_argument(
         "--group",
-        default="SERVICE",
-        choices=["SERVICE", "LINKED_ACCOUNT", "USAGE_TYPE", "REGION"],
+        default=SERVICE_DIMENSION,
+        choices=GROUP_DIMENSIONS,
     )
     p.add_argument(
         "--metric",
-        default="UnblendedCost",
-        choices=[
-            "UnblendedCost",
-            "BlendedCost",
-            "NetUnblendedCost",
-            "AmortizedCost",
-            "NetAmortizedCost",
-        ],
+        default=DEFAULT_METRIC,
+        choices=COST_METRICS,
         help="Cost Explorer metric; Net* nets out credits/refunds, "
         "Amortized* spreads RI/Savings Plan cost over its term",
     )
@@ -277,20 +293,20 @@ def main(argv=None):
         new_period=period,
     )
     report = render(rows, period, vs, args.top)
-    if args.why and rows and args.group == "SERVICE":
+    if args.why and rows and args.group == SERVICE_DIMENSION:
         biggest = rows[0]["group"]
         why_rows = build_diff(
             fetch_costs(
                 vs,
-                "USAGE_TYPE",
+                USAGE_TYPE_DIMENSION,
                 metric=args.metric,
-                filter_dimension=("SERVICE", biggest),
+                filter_dimension=(SERVICE_DIMENSION, biggest),
             ),
             fetch_costs(
                 period,
-                "USAGE_TYPE",
+                USAGE_TYPE_DIMENSION,
                 metric=args.metric,
-                filter_dimension=("SERVICE", biggest),
+                filter_dimension=(SERVICE_DIMENSION, biggest),
             ),
             args.threshold,
         )
