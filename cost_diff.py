@@ -240,7 +240,7 @@ def post_slack(webhook, payload):
     urllib.request.urlopen(req, timeout=15)  # nosec B310  scheme checked above
 
 
-def main(argv=None):
+def _build_parser():
     parser = argparse.ArgumentParser(
         prog="cost-diff",
         description=__doc__,
@@ -278,7 +278,31 @@ def main(argv=None):
         action="store_true",
         help="drill down the biggest mover by USAGE_TYPE (only with --group SERVICE)",
     )
-    args = parser.parse_args(argv)
+    return parser
+
+
+def _usage_type_breakdown(service, vs, period, metric, threshold):
+    """Render the USAGE_TYPE drilldown for the service that moved most."""
+    rows = build_diff(
+        fetch_costs(
+            vs,
+            USAGE_TYPE_DIMENSION,
+            metric=metric,
+            filter_dimension=(SERVICE_DIMENSION, service),
+        ),
+        fetch_costs(
+            period,
+            USAGE_TYPE_DIMENSION,
+            metric=metric,
+            filter_dimension=(SERVICE_DIMENSION, service),
+        ),
+        threshold,
+    )
+    return render_why(rows, service)
+
+
+def main(argv=None):
+    args = _build_parser().parse_args(argv)
 
     today = datetime.now(tz=timezone.utc).date()
     if args.last_month:
@@ -297,23 +321,9 @@ def main(argv=None):
     report = render(rows, period, vs, args.top)
     wants_usage_breakdown = args.why and rows and args.group == SERVICE_DIMENSION
     if wants_usage_breakdown:
-        biggest = rows[0]["group"]
-        why_rows = build_diff(
-            fetch_costs(
-                vs,
-                USAGE_TYPE_DIMENSION,
-                metric=args.metric,
-                filter_dimension=(SERVICE_DIMENSION, biggest),
-            ),
-            fetch_costs(
-                period,
-                USAGE_TYPE_DIMENSION,
-                metric=args.metric,
-                filter_dimension=(SERVICE_DIMENSION, biggest),
-            ),
-            args.threshold,
+        report += "\n" + _usage_type_breakdown(
+            rows[0]["group"], vs, period, args.metric, args.threshold
         )
-        report += "\n" + render_why(why_rows, biggest)
     print(report)
     if args.slack:
         post_slack(args.slack, render_slack_blocks(rows, period, vs, args.top))
