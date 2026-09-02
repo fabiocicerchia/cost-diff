@@ -35,5 +35,11 @@ cost-diff = "cost_diff:main"
 [tool.setuptools]
 py-modules = ["cost_diff"]
 
+[tool.pytest.ini_options]
+# Import cost_diff from the checkout, not from whatever version happens to be
+# installed in site-packages. Without this a stale install silently shadows the
+# tree and the suite grades code that is not in this repo.
+pythonpath = ["."]
+
 [tool.ruff]
 line-length = 100
