@@ -146,6 +146,17 @@ def _pct_str(r):
     return f" ({r['pct']:+.0f}%)" if r["pct"] is not None else " (new)"
 
 
+def _signed_usd(amount):
+    """`+$1,234` / `−$1,234` — U+2212 minus, not a hyphen, in every table."""
+    return f"{'+' if amount > 0 else '−'}${abs(amount):,.0f}"
+
+
+def _change_row(r, flag=""):
+    """One Markdown row, shared by the service table and the usage-type table."""
+    change = _signed_usd(r["delta"]) + _pct_str(r) + flag
+    return f"| {change} | {r['group']} | ${r['before']:,.0f} | ${r['after']:,.0f} |"
+
+
 def render(rows, period, vs, top=10):
     total_before, total_after, total_delta, arrow = _totals(rows)
     lines = [
@@ -158,15 +169,11 @@ def render(rows, period, vs, top=10):
     ]
     any_anomaly = False
     for r in rows[:top]:
-        pct = _pct_str(r)
         flag = ""
         if r.get("anomaly"):
             flag = " ⚠"
             any_anomaly = True
-        lines.append(
-            f"| {'+' if r['delta'] > 0 else '−'}${abs(r['delta']):,.0f}{pct}{flag} "
-            f"| {r['group']} | ${r['before']:,.0f} | ${r['after']:,.0f} |"
-        )
+        lines.append(_change_row(r, flag))
     hidden = len(rows) - top
     if hidden > 0:
         lines.append(f"\n…and {hidden} more changes above the threshold, not shown (see --top).")
@@ -185,12 +192,7 @@ def render_why(rows, group_label, top=5):
         "| change | usage type | before | after |",
         "|---|---|---|---|",
     ]
-    for r in rows[:top]:
-        pct = _pct_str(r)
-        lines.append(
-            f"| {'+' if r['delta'] > 0 else '−'}${abs(r['delta']):,.0f}{pct} "
-            f"| {r['group']} | ${r['before']:,.0f} | ${r['after']:,.0f} |"
-        )
+    lines.extend(_change_row(r) for r in rows[:top])
     return "\n".join(lines)
 
 
@@ -198,7 +200,7 @@ def render_slack_blocks(rows, period, vs, top=10):
     """Render the report as Slack Block Kit blocks (mrkdwn, not GFM)."""
     total_before, total_after, total_delta, arrow = _totals(rows)
     table_lines = [
-        f"{'+' if r['delta'] > 0 else '−'}${abs(r['delta']):,.0f}"
+        f"{_signed_usd(r['delta'])}"
         f"{' ⚠' if r.get('anomaly') else ''} {r['group']}: ${r['before']:,.0f} → ${r['after']:,.0f}"
         for r in rows[:top]
     ]
