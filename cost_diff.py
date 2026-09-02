@@ -11,6 +11,7 @@ import calendar
 import json
 import sys
 import urllib.request
+from dataclasses import dataclass
 from datetime import date, datetime, timezone
 
 # Cost Explorer is a global service: its only endpoint lives in us-east-1,
@@ -34,6 +35,18 @@ COST_METRICS = [
 # than this tolerance away from what the business-day-count difference explains.
 ANOMALY_MIN_PCT = 10
 ANOMALY_TOLERANCE_PCT = 20
+
+
+@dataclass(frozen=True)
+class Change:
+    """One group's cost movement between the two periods."""
+
+    group: str
+    before: float
+    after: float
+    delta: float
+    pct: float | None  # None when the group is new: no baseline to divide by
+    anomaly: bool
 
 
 def month_bounds(yyyy_mm):
@@ -97,7 +110,7 @@ def weekday_count(yyyy_mm):
 
 
 def build_diff(old, new, threshold_usd=1.0, old_period=None, new_period=None):
-    """Merge two cost maps into sorted change rows.
+    """Merge two cost maps into Change rows, biggest absolute mover first.
 
     If old_period/new_period are given, flags rows whose % change isn't
     explained by the difference in business-day count between the two
@@ -119,31 +132,22 @@ def build_diff(old, new, threshold_usd=1.0, old_period=None, new_period=None):
         if weekday_ratio is not None and pct is not None:
             expected_pct = (weekday_ratio - 1) * 100
             anomaly = abs(pct) > ANOMALY_MIN_PCT and abs(pct - expected_pct) > ANOMALY_TOLERANCE_PCT
-        rows.append(
-            {
-                "group": key,
-                "before": before,
-                "after": after,
-                "delta": delta,
-                "pct": pct,
-                "anomaly": anomaly,
-            }
-        )
-    rows.sort(key=lambda row: -abs(row["delta"]))
+        rows.append(Change(key, before, after, delta, pct, anomaly))
+    rows.sort(key=lambda row: -abs(row.delta))
     return rows
 
 
 def _totals(rows):
     """(total_before, total_after, total_delta, trend arrow) across all rows."""
-    total_before = sum(row["before"] for row in rows)
-    total_after = sum(row["after"] for row in rows)
+    total_before = sum(row.before for row in rows)
+    total_after = sum(row.after for row in rows)
     total_delta = total_after - total_before
     arrow = "▲" if total_delta > 0 else "▼" if total_delta < 0 else "→"
     return total_before, total_after, total_delta, arrow
 
 
 def _pct_str(row):
-    return f" ({row['pct']:+.0f}%)" if row["pct"] is not None else " (new)"
+    return f" ({row.pct:+.0f}%)" if row.pct is not None else " (new)"
 
 
 def _signed_usd(amount):
@@ -153,8 +157,8 @@ def _signed_usd(amount):
 
 def _change_row(row, flag=""):
     """One Markdown row, shared by the service table and the usage-type table."""
-    change = _signed_usd(row["delta"]) + _pct_str(row) + flag
-    return f"| {change} | {row['group']} | ${row['before']:,.0f} | ${row['after']:,.0f} |"
+    change = _signed_usd(row.delta) + _pct_str(row) + flag
+    return f"| {change} | {row.group} | ${row.before:,.0f} | ${row.after:,.0f} |"
 
 
 def render(rows, period, vs, top=10):
@@ -170,7 +174,7 @@ def render(rows, period, vs, top=10):
     any_anomaly = False
     for row in rows[:top]:
         flag = ""
-        if row.get("anomaly"):
+        if row.anomaly:
             flag = " ⚠"
             any_anomaly = True
         lines.append(_change_row(row, flag))
@@ -200,8 +204,8 @@ def render_slack_blocks(rows, period, vs, top=10):
     """Render the report as Slack Block Kit blocks (mrkdwn, not GFM)."""
     total_before, total_after, total_delta, arrow = _totals(rows)
     table_lines = [
-        f"{_signed_usd(row['delta'])}{' ⚠' if row.get('anomaly') else ''} "
-        f"{row['group']}: ${row['before']:,.0f} → ${row['after']:,.0f}"
+        f"{_signed_usd(row.delta)}{' ⚠' if row.anomaly else ''} "
+        f"{row.group}: ${row.before:,.0f} → ${row.after:,.0f}"
         for row in rows[:top]
     ]
     return {
@@ -322,7 +326,7 @@ def main(argv=None):
     wants_usage_breakdown = args.why and rows and args.group == SERVICE_DIMENSION
     if wants_usage_breakdown:
         report += "\n" + _usage_type_breakdown(
-            rows[0]["group"], vs, period, args.metric, args.threshold
+            rows[0].group, vs, period, args.metric, args.threshold
         )
     print(report)
     if args.slack:
