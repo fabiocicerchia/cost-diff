@@ -23,14 +23,14 @@ def test_anomaly_flags_unexplained_swings_same_weekday_count():
         old_period="2026-06",
         new_period="2026-06",
     )
-    by_group = {r["group"]: r for r in rows}
-    assert by_group["EC2"]["anomaly"] is True  # +900%, nothing explains that
-    assert by_group["S3"]["anomaly"] is False  # +15%, below the noise floor
+    by_group = {r.group: r for r in rows}
+    assert by_group["EC2"].anomaly is True  # +900%, nothing explains that
+    assert by_group["S3"].anomaly is False  # +15%, below the noise floor
 
 
 def test_no_anomaly_field_set_without_periods():
     rows = build_diff({"EC2": 100.0}, {"EC2": 1000.0})
-    assert rows[0]["anomaly"] is False
+    assert rows[0].anomaly is False
 
 
 def test_render_slack_blocks_uses_mrkdwn_not_gfm():
@@ -50,11 +50,11 @@ def test_diff_sorted_by_magnitude_and_thresholded():
         {"EC2": 1000.0, "S3": 50.0, "Athena": 10.0},
         {"EC2": 1400.0, "S3": 49.5, "RDS": 200.0, "Athena": 10.0},
     )
-    assert [r["group"] for r in rows] == [
+    assert [r.group for r in rows] == [
         "EC2",
         "RDS",
     ]  # S3 under threshold, Athena unchanged
-    assert rows[1]["pct"] is None  # new service has no baseline pct
+    assert rows[1].pct is None  # new service has no baseline pct
 
 
 def test_render_contains_totals_and_table():
