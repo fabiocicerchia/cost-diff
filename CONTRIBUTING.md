@@ -5,9 +5,9 @@ Thanks for taking the time to contribute to cost-diff!
 ## Getting started
 
 1. Fork and clone the repo (needs Python 3.10+ and `make`).
-2. Install tooling and git hooks: `make setup` (git hooks) and `make dev`
+1. Install tooling and git hooks: `make setup` (git hooks) and `make dev`
    (editable install with pytest, ruff, build).
-3. Create a branch: `git checkout -b feat/short-description`.
+1. Create a branch: `git checkout -b feat/short-description`.
 
 ## Making changes
 
@@ -36,10 +36,10 @@ Releases are automated by
 changelog manually.
 
 1. Merge `feat:`/`fix:` PRs into `main` as normal — **no tag is created**.
-2. release-please keeps an open **release PR** ("chore: release X.Y.Z") that
+1. release-please keeps an open **release PR** ("chore: release X.Y.Z") that
    bumps `pyproject.toml`'s version and updates `CHANGELOG.md`, recalculating on
    every merge.
-3. When you're ready to ship, **merge the release PR** — that (and only that)
+1. When you're ready to ship, **merge the release PR** — that (and only that)
    creates the `vX.Y.Z` tag and GitHub Release, builds the sdist + wheel,
    attaches them, and (if `PUBLISH_TO_PYPI` is set) publishes to PyPI via
    trusted publishing.
