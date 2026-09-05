@@ -1,9 +1,18 @@
 from datetime import date
 
-from cost_diff import build_diff, month_bounds, previous_month, render, weekday_count
+from cost_diff import (
+    build_diff,
+    fetch_costs,
+    month_bounds,
+    previous_month,
+    render,
+    render_slack_blocks,
+    render_why,
+    weekday_count,
+)
 
 
-def test_month_arithmetic():
+def test_month_arithmetic() -> None:
     assert previous_month("2026-01") == "2025-12"
     # End is exclusive per the Cost Explorer API: the day *after* the last day
     # of the month, so a TimePeriod covering Feb 2026 includes Feb 28 itself.
@@ -11,11 +20,11 @@ def test_month_arithmetic():
     assert month_bounds("2026-12")[1] == date(2027, 1, 1)
 
 
-def test_weekday_count():
+def test_weekday_count() -> None:
     assert weekday_count("2026-06") == 22  # June 2026: 30 days, 8 weekend days
 
 
-def test_anomaly_flags_unexplained_swings_same_weekday_count():
+def test_anomaly_flags_unexplained_swings_same_weekday_count() -> None:
     # same period twice -> weekday ratio 1 -> expected pct is 0
     rows = build_diff(
         {"EC2": 100.0, "S3": 100.0},
@@ -28,24 +37,24 @@ def test_anomaly_flags_unexplained_swings_same_weekday_count():
     assert by_group["S3"].anomaly is False  # +15%, below the noise floor
 
 
-def test_no_anomaly_field_set_without_periods():
+def test_no_anomaly_field_set_without_periods() -> None:
     rows = build_diff({"EC2": 100.0}, {"EC2": 1000.0})
     assert rows[0].anomaly is False
 
 
-def test_render_slack_blocks_uses_mrkdwn_not_gfm():
-    from cost_diff import render_slack_blocks
+def test_render_slack_blocks_uses_mrkdwn_not_gfm() -> None:
 
     rows = build_diff({"EC2": 100.0}, {"EC2": 250.0})
     payload = render_slack_blocks(rows, "2026-06", "2026-05")
     blocks = payload["blocks"]
     assert blocks[0]["text"]["text"] == "AWS cost diff: 2026-05 → 2026-06"
     total_text = blocks[1]["text"]["text"]
-    assert total_text.startswith("*Total:*") and "**" not in total_text
+    assert total_text.startswith("*Total:*")
+    assert "**" not in total_text
     assert "EC2" in blocks[2]["text"]["text"]
 
 
-def test_diff_sorted_by_magnitude_and_thresholded():
+def test_diff_sorted_by_magnitude_and_thresholded() -> None:
     rows = build_diff(
         {"EC2": 1000.0, "S3": 50.0, "Athena": 10.0},
         {"EC2": 1400.0, "S3": 49.5, "RDS": 200.0, "Athena": 10.0},
@@ -57,19 +66,21 @@ def test_diff_sorted_by_magnitude_and_thresholded():
     assert rows[1].pct is None  # new service has no baseline pct
 
 
-def test_render_contains_totals_and_table():
+def test_render_contains_totals_and_table() -> None:
     rows = build_diff({"EC2": 100.0}, {"EC2": 250.0})
     out = render(rows, "2026-06", "2026-05")
-    assert "2026-05 → 2026-06" in out and "| EC2 |" in out and "▲ $150" in out
+    assert "2026-05 → 2026-06" in out
+    assert "| EC2 |" in out
+    assert "▲ $150" in out
 
 
-def test_render_zero_net_change_uses_neutral_arrow():
+def test_render_zero_net_change_uses_neutral_arrow() -> None:
     rows = build_diff({"EC2": 100.0, "S3": 100.0}, {"EC2": 150.0, "S3": 50.0})
     out = render(rows, "2026-06", "2026-05")
     assert "→ $0" in out
 
 
-def test_render_hidden_rows_message_blames_top_not_threshold():
+def test_render_hidden_rows_message_blames_top_not_threshold() -> None:
     rows = build_diff(
         {"A": 100.0, "B": 100.0, "C": 100.0},
         {"A": 600.0, "B": 600.0, "C": 600.0},
@@ -78,23 +89,21 @@ def test_render_hidden_rows_message_blames_top_not_threshold():
     assert "above the threshold, not shown" in out
 
 
-def test_fetch_costs_sends_exclusive_end_date():
+def test_fetch_costs_sends_exclusive_end_date() -> None:
     class FakeCE:
-        def get_cost_and_usage(self, **kwargs):
+        def get_cost_and_usage(self, **kwargs: object) -> dict[str, object]:
             assert kwargs["TimePeriod"] == {"Start": "2026-02-01", "End": "2026-03-01"}
             return {"ResultsByTime": []}
-
-    from cost_diff import fetch_costs
 
     fetch_costs("2026-02", client=FakeCE())
 
 
-def test_fetch_costs_pagination_shape():
+def test_fetch_costs_pagination_shape() -> None:
     class FakeCE:
-        def __init__(self):
+        def __init__(self) -> None:
             self.calls = 0
 
-        def get_cost_and_usage(self, **kwargs):
+        def get_cost_and_usage(self, **kwargs: object) -> dict[str, object]:
             self.calls += 1
             if self.calls == 1:
                 return {
@@ -123,14 +132,12 @@ def test_fetch_costs_pagination_shape():
                 ]
             }
 
-    from cost_diff import fetch_costs
-
     assert fetch_costs("2026-06", client=FakeCE()) == {"EC2": 15.0}
 
 
-def test_fetch_costs_uses_selected_metric():
+def test_fetch_costs_uses_selected_metric() -> None:
     class FakeCE:
-        def get_cost_and_usage(self, **kwargs):
+        def get_cost_and_usage(self, **kwargs: object) -> dict[str, object]:
             assert kwargs["Metrics"] == ["AmortizedCost"]
             return {
                 "ResultsByTime": [
@@ -145,14 +152,12 @@ def test_fetch_costs_uses_selected_metric():
                 ]
             }
 
-    from cost_diff import fetch_costs
-
     assert fetch_costs("2026-06", client=FakeCE(), metric="AmortizedCost") == {"EC2": 42.0}
 
 
-def test_fetch_costs_applies_filter_dimension():
+def test_fetch_costs_applies_filter_dimension() -> None:
     class FakeCE:
-        def get_cost_and_usage(self, **kwargs):
+        def get_cost_and_usage(self, **kwargs: object) -> dict[str, object]:
             assert kwargs["Filter"] == {"Dimensions": {"Key": "SERVICE", "Values": ["EC2"]}}
             return {
                 "ResultsByTime": [
@@ -167,17 +172,13 @@ def test_fetch_costs_applies_filter_dimension():
                 ]
             }
 
-    from cost_diff import fetch_costs
-
-    result = fetch_costs(
-        "2026-06", "USAGE_TYPE", client=FakeCE(), filter_dimension=("SERVICE", "EC2")
-    )
+    result = fetch_costs("2026-06", "USAGE_TYPE", client=FakeCE(), filter_dimension=("SERVICE", "EC2"))
     assert result == {"BoxUsage": 7.0}
 
 
-def test_render_why_lists_usage_types():
-    from cost_diff import build_diff, render_why
+def test_render_why_lists_usage_types() -> None:
 
     rows = build_diff({"BoxUsage": 100.0}, {"BoxUsage": 300.0})
     out = render_why(rows, "EC2")
-    assert "Why EC2 moved" in out and "BoxUsage" in out
+    assert "Why EC2 moved" in out
+    assert "BoxUsage" in out
