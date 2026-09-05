@@ -17,10 +17,10 @@ $ cost-diff --last-month --top 5
 
 **Total: $12,340 → $14,890 (▲ $2,550)**
 
-| change | service | before | after |
-|---|---|---|---|
-| +$1,900 (+38%) | Amazon EC2 | $5,000 | $6,900 |
-| +$400 (new)    | Amazon SageMaker | $0 | $400 |
+| change         | service          | before | after  |
+| -------------- | ---------------- | ------ | ------ |
+| +$1,900 (+38%) | Amazon EC2       | $5,000 | $6,900 |
+| +$400 (new)    | Amazon SageMaker | $0     | $400   |
 ...
 ```
 
