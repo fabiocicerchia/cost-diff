@@ -42,4 +42,29 @@ py-modules = ["cost_diff"]
 pythonpath = ["."]
 
 [tool.ruff]
-line-length = 100
+line-length = 120
+
+[tool.ruff.lint]
+# U+2212 MINUS SIGN is deliberate in the money columns -- it is the character
+# that lines up with a digit, which a hyphen does not.
+allowed-confusables = ["−"]
+select = [
+  "E", "W", "F", "I", "N", "UP", "ANN", "ASYNC", "S", "B", "A", "C4", "DTZ",
+  "T20", "PT", "RET", "SIM", "PTH", "ERA", "TD", "FIX", "PLR2004", "TRY", "PL", "RUF",
+]
+ignore = [
+  "ANN401",      # Any in *args/**kwargs — FC-GEN-016's comment rule covers it
+  "TRY003",      # long messages inline; FC-GEN-022 wants them descriptive
+]
+
+[tool.ruff.lint.flake8-annotations]
+mypy-init-return = true
+
+[tool.ruff.lint.per-file-ignores]
+# `assert` is what a test is, and an expected value is the literal it compares
+# against -- naming it moves the assertion one step from the thing asserted.
+"tests/**" = [
+  "S101",     # `assert` is what a test is
+  "PLR2004",  # an expected value is the literal it compares against
+  "ANN001",   # a fixture or a fake's argument, named by the test that builds it
+]
