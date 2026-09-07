@@ -22,7 +22,7 @@ classifiers = [
 dependencies = ["boto3>=1.34"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "ruff>=0.4", "build>=1.2"]
+dev = ["pytest>=8.0", "ruff>=0.4", "build>=1.2", "basedpyright>=1.31"]
 
 [project.urls]
 Homepage = "https://github.com/fabiocicerchia/cost-diff"
@@ -42,4 +42,40 @@ py-modules = ["cost_diff"]
 pythonpath = ["."]
 
 [tool.ruff]
-line-length = 100
+line-length = 120
+
+[tool.ruff.lint]
+# U+2212 MINUS SIGN is deliberate in the money columns -- it is the character
+# that lines up with a digit, which a hyphen does not.
+allowed-confusables = ["−"]
+select = [
+  "E", "W", "F", "I", "N", "UP", "ANN", "ASYNC", "S", "B", "A", "C4", "DTZ",
+  "T20", "PT", "RET", "SIM", "PTH", "ERA", "TD", "FIX", "PLR2004", "TRY", "PL", "RUF",
+]
+ignore = [
+  "ANN401",      # Any in *args/**kwargs — FC-GEN-016's comment rule covers it
+  "TRY003",      # long messages inline; FC-GEN-022 wants them descriptive
+]
+
+[tool.ruff.lint.flake8-annotations]
+mypy-init-return = true
+
+[tool.ruff.lint.per-file-ignores]
+# `assert` is what a test is, and an expected value is the literal it compares
+# against -- naming it moves the assertion one step from the thing asserted.
+"tests/**" = [
+  "S101",     # `assert` is what a test is
+  "PLR2004",  # an expected value is the literal it compares against
+  "ANN001",   # a fixture or a fake's argument, named by the test that builds it
+]
+
+[tool.basedpyright]
+# FC-PY-003 asks for strict. The point of a type checker in CI is that it knows
+# the types: "unknown" is the finding, not a level of detail to relax away.
+typeCheckingMode = "strict"
+# Matches requires-python, so the checker rejects what the oldest supported
+# interpreter would reject rather than what this machine happens to run.
+pythonVersion = "3.10"
+# Third-party stubs are not this repository's to ship, and a missing one is a
+# packaging fact about someone else's project rather than a defect here.
+reportMissingTypeStubs = false

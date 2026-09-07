@@ -4,10 +4,10 @@
 
 Only the latest release is supported with security updates.
 
-| Version | Supported |
-| ------- | --------- |
-| latest  | ✅        |
-| < latest| ❌        |
+| Version  | Supported |
+| -------- | --------- |
+| latest   | ✅        |
+| < latest | ❌        |
 
 ## Reporting a Vulnerability
 
