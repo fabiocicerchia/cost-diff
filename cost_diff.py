@@ -13,7 +13,7 @@ import sys
 import urllib.request
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
-from typing import Any
+from typing import Any, Protocol, cast
 
 # Cost Explorer is a global service: its only endpoint lives in us-east-1,
 # whatever region the caller's profile points at.
@@ -45,8 +45,18 @@ SATURDAY = 5
 _HTTP_TIMEOUT_SECONDS = 15
 
 Costs = dict[str, float]
-# The boto3 Cost Explorer client, or the stub the tests pass in its place.
-CostExplorer = Any
+
+
+class CostExplorer(Protocol):
+    """The one Cost Explorer call this tool makes.
+
+    A protocol rather than boto3's own client type: boto3 ships no annotations,
+    and the tests pass a stub that has this method and nothing else. Writing it
+    out also says what the tool needs from AWS -- one paginated call, no
+    client-wide surface.
+    """
+
+    def get_cost_and_usage(self, **kwargs: Any) -> dict[str, Any]: ...
 
 
 @dataclass(frozen=True)
@@ -90,11 +100,20 @@ def fetch_costs(
         # require it installed.
         import boto3  # noqa: PLC0415
 
-        client = boto3.client("ce", region_name=CE_REGION)
+        # boto3 ships no annotations for its client factory -- boto3-stubs
+        # types one service per extra and leaves the rest Unknown, which is a
+        # dev dependency and a 2,000-line overload set for one call. This is
+        # the single place an untyped value crosses into the typed part of
+        # the tool, and the protocol above says what it has to be.
+        client = cast(
+            "CostExplorer",
+            boto3.client("ce", region_name=CE_REGION),  # pyright: ignore[reportUnknownMemberType]
+        )
     start, end = month_bounds(period)
-    results, token = {}, None
+    results: Costs = {}
+    token: str | None = None
     while True:
-        kwargs = {
+        kwargs: dict[str, Any] = {
             "TimePeriod": {"Start": start.isoformat(), "End": end.isoformat()},
             "Granularity": "MONTHLY",
             "Metrics": [metric],
@@ -141,7 +160,7 @@ def build_diff(
         old_weekdays = weekday_count(old_period)
         if old_weekdays:
             weekday_ratio = weekday_count(new_period) / old_weekdays
-    rows = []
+    rows: list[Change] = []
     for key in sorted(old.keys() | new.keys()):
         before, after = old.get(key, 0.0), new.get(key, 0.0)
         delta = after - before
