@@ -13,6 +13,7 @@ import sys
 import urllib.request
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
+from typing import Any
 
 # Cost Explorer is a global service: its only endpoint lives in us-east-1,
 # whatever region the caller's profile points at.
@@ -37,6 +38,17 @@ ANOMALY_MIN_PCT = 10
 ANOMALY_TOLERANCE_PCT = 20
 
 
+# {group: cost in USD} for one period, as Cost Explorer reports it.
+DECEMBER = 12
+# Monday..Friday are 0..4, so anything below this is a business day.
+SATURDAY = 5
+_HTTP_TIMEOUT_SECONDS = 15
+
+Costs = dict[str, float]
+# The boto3 Cost Explorer client, or the stub the tests pass in its place.
+CostExplorer = Any
+
+
 @dataclass(frozen=True)
 class Change:
     """One group's cost movement between the two periods."""
@@ -49,32 +61,34 @@ class Change:
     anomaly: bool
 
 
-def month_bounds(yyyy_mm):
+def month_bounds(yyyy_mm: str) -> tuple[date, date]:
     y, m = (int(x) for x in yyyy_mm.split("-"))
     start = date(y, m, 1)
-    end = date(y + 1, 1, 1) if m == 12 else date(y, m + 1, 1)
+    end = date(y + 1, 1, 1) if m == DECEMBER else date(y, m + 1, 1)
     return start, end
 
 
-def previous_month(yyyy_mm):
+def previous_month(yyyy_mm: str) -> str:
     y, m = (int(x) for x in yyyy_mm.split("-"))
     return f"{y - 1}-12" if m == 1 else f"{y}-{m - 1:02d}"
 
 
 def fetch_costs(
-    period,
-    group_by=SERVICE_DIMENSION,
-    client=None,
-    metric=DEFAULT_METRIC,
-    filter_dimension=None,
-):
+    period: str,
+    group_by: str = SERVICE_DIMENSION,
+    client: CostExplorer | None = None,
+    metric: str = DEFAULT_METRIC,
+    filter_dimension: tuple[str, str] | None = None,
+) -> Costs:
     """Return {group: cost_usd} for a YYYY-MM period from Cost Explorer.
 
     filter_dimension, if given, is a (key, value) pair restricting the query
     (e.g. narrowing a USAGE_TYPE breakdown to a single SERVICE).
     """
     if client is None:
-        import boto3
+        # Only the live path needs boto3; the tests pass a client and must not
+        # require it installed.
+        import boto3  # noqa: PLC0415
 
         client = boto3.client("ce", region_name=CE_REGION)
     start, end = month_bounds(period)
@@ -102,14 +116,20 @@ def fetch_costs(
             return results
 
 
-def weekday_count(yyyy_mm):
+def weekday_count(yyyy_mm: str) -> int:
     """Number of Mon-Fri days in a YYYY-MM period."""
     y, m = (int(x) for x in yyyy_mm.split("-"))
     days_in_month = calendar.monthrange(y, m)[1]
-    return sum(1 for d in range(1, days_in_month + 1) if date(y, m, d).weekday() < 5)
+    return sum(1 for d in range(1, days_in_month + 1) if date(y, m, d).weekday() < SATURDAY)
 
 
-def build_diff(old, new, threshold_usd=1.0, old_period=None, new_period=None):
+def build_diff(
+    old: Costs,
+    new: Costs,
+    threshold_usd: float = 1.0,
+    old_period: str | None = None,
+    new_period: str | None = None,
+) -> list[Change]:
     """Merge two cost maps into Change rows, biggest absolute mover first.
 
     If old_period/new_period are given, flags rows whose % change isn't
@@ -137,7 +157,7 @@ def build_diff(old, new, threshold_usd=1.0, old_period=None, new_period=None):
     return rows
 
 
-def _totals(rows):
+def _totals(rows: list[Change]) -> tuple[float, float, float, str]:
     """(total_before, total_after, total_delta, trend arrow) across all rows."""
     total_before = sum(row.before for row in rows)
     total_after = sum(row.after for row in rows)
@@ -146,22 +166,22 @@ def _totals(rows):
     return total_before, total_after, total_delta, arrow
 
 
-def _pct_str(row):
+def _pct_str(row: Change) -> str:
     return f" ({row.pct:+.0f}%)" if row.pct is not None else " (new)"
 
 
-def _signed_usd(amount):
+def _signed_usd(amount: float) -> str:
     """`+$1,234` / `−$1,234` — U+2212 minus, not a hyphen, in every table."""
     return f"{'+' if amount > 0 else '−'}${abs(amount):,.0f}"
 
 
-def _change_row(row, flag=""):
+def _change_row(row: Change, flag: str = "") -> str:
     """One Markdown row, shared by the service table and the usage-type table."""
     change = _signed_usd(row.delta) + _pct_str(row) + flag
     return f"| {change} | {row.group} | ${row.before:,.0f} | ${row.after:,.0f} |"
 
 
-def render(rows, period, vs, top=10):
+def render(rows: list[Change], period: str, vs: str, top: int = 10) -> str:
     total_before, total_after, total_delta, arrow = _totals(rows)
     lines = [
         f"# AWS cost diff: {vs} → {period}",
@@ -182,13 +202,11 @@ def render(rows, period, vs, top=10):
     if hidden > 0:
         lines.append(f"\n…and {hidden} more changes above the threshold, not shown (see --top).")
     if any_anomaly:
-        lines.append(
-            "\n⚠ = change not explained by the business-day-count difference between periods."
-        )
+        lines.append("\n⚠ = change not explained by the business-day-count difference between periods.")
     return "\n".join(lines)
 
 
-def render_why(rows, group_label, top=5):
+def render_why(rows: list[Change], group_label: str, top: int = 5) -> str:
     """Render a USAGE_TYPE breakdown explaining why `group_label` moved."""
     lines = [
         f"\n### Why {group_label} moved (by usage type)",
@@ -200,12 +218,11 @@ def render_why(rows, group_label, top=5):
     return "\n".join(lines)
 
 
-def render_slack_blocks(rows, period, vs, top=10):
+def render_slack_blocks(rows: list[Change], period: str, vs: str, top: int = 10) -> dict[str, Any]:
     """Render the report as Slack Block Kit blocks (mrkdwn, not GFM)."""
     total_before, total_after, total_delta, arrow = _totals(rows)
     table_lines = [
-        f"{_signed_usd(row.delta)}{' ⚠' if row.anomaly else ''} "
-        f"{row.group}: ${row.before:,.0f} → ${row.after:,.0f}"
+        f"{_signed_usd(row.delta)}{' ⚠' if row.anomaly else ''} {row.group}: ${row.before:,.0f} → ${row.after:,.0f}"
         for row in rows[:top]
     ]
     return {
@@ -221,8 +238,7 @@ def render_slack_blocks(rows, period, vs, top=10):
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
-                    "text": f"*Total:* ${total_before:,.0f} → ${total_after:,.0f} "
-                    f"({arrow} ${abs(total_delta):,.0f})",
+                    "text": f"*Total:* ${total_before:,.0f} → ${total_after:,.0f} ({arrow} ${abs(total_delta):,.0f})",
                 },
             },
             {
@@ -236,15 +252,19 @@ def render_slack_blocks(rows, period, vs, top=10):
     }
 
 
-def post_slack(webhook, payload):
+def post_slack(webhook: str, payload: dict[str, Any]) -> None:
     if not webhook.startswith("https://"):
         raise ValueError("Slack webhook must be an https:// URL")
     body = json.dumps(payload).encode()
-    req = urllib.request.Request(webhook, data=body, headers={"Content-Type": "application/json"})
-    urllib.request.urlopen(req, timeout=15)  # nosec B310  scheme checked above
+    req = urllib.request.Request(  # noqa: S310 — scheme checked above
+        webhook, data=body, headers={"Content-Type": "application/json"}
+    )
+    # `nosec` is bandit's marker; ruff reads `noqa`. The https check above is
+    # the reason either of them is here.
+    urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT_SECONDS)  # noqa: S310 — scheme checked above
 
 
-def _build_parser():
+def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="cost-diff",
         description=__doc__,
@@ -285,7 +305,7 @@ def _build_parser():
     return parser
 
 
-def _usage_type_breakdown(service, vs, period, metric, threshold):
+def _usage_type_breakdown(service: str, vs: str, period: str, metric: str, threshold: float) -> str:
     """Render the USAGE_TYPE drilldown for the service that moved most."""
     rows = build_diff(
         fetch_costs(
@@ -305,14 +325,11 @@ def _usage_type_breakdown(service, vs, period, metric, threshold):
     return render_why(rows, service)
 
 
-def main(argv=None):
+def main(argv: list[str] | None = None) -> int:
     args = _build_parser().parse_args(argv)
 
     today = datetime.now(tz=timezone.utc).date()
-    if args.last_month:
-        period = previous_month(f"{today.year}-{today.month:02d}")
-    else:
-        period = args.period
+    period = previous_month(f"{today.year}-{today.month:02d}") if args.last_month else args.period
     vs = args.vs or previous_month(period)
 
     rows = build_diff(
@@ -325,10 +342,8 @@ def main(argv=None):
     report = render(rows, period, vs, args.top)
     wants_usage_breakdown = args.why and rows and args.group == SERVICE_DIMENSION
     if wants_usage_breakdown:
-        report += "\n" + _usage_type_breakdown(
-            rows[0].group, vs, period, args.metric, args.threshold
-        )
-    print(report)
+        report += "\n" + _usage_type_breakdown(rows[0].group, vs, period, args.metric, args.threshold)
+    print(report)  # noqa: T201 — the tool's output
     if args.slack:
         post_slack(args.slack, render_slack_blocks(rows, period, vs, args.top))
     return 0
