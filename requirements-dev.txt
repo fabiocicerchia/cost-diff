@@ -4,13 +4,13 @@ basedpyright==1.39.10 \
     --hash=sha256:c8eaf5302f3265e275c7df4fba194d7afa7c1cb53fbfd448e90098360aca2c2e \
     --hash=sha256:cbd75d83c0be841329bcfef2d2f1182f152a6d975b8eb199e75cf5b8e9a3de78
     # via cost-diff (pyproject.toml)
-boto3==1.43.74 \
-    --hash=sha256:9d4d0dcf81c941cfe7d927486435521e0f3bf657cb68b10dfe445cfe311f8839 \
-    --hash=sha256:d7f6a921efbda61ed787b403df8b64a95bc66e66299e9772fc40c235c28a5bde
+boto3==1.43.85 \
+    --hash=sha256:113b6e1aa3f5722f90c01fc63968c269a9b1fd03ac2594fe16c56a66e6331c5f \
+    --hash=sha256:f11bdaca18e59f53ec0529f4d6203dd1f0bb7ff165e51559d62fd863024abc9b
     # via cost-diff (pyproject.toml)
-botocore==1.43.80 \
-    --hash=sha256:461bce2159eadd758d0651d2a11dced3450169383e6ca8ef65f5c250f8b7ebd4 \
-    --hash=sha256:c021e60df26d17e9a8db05fa5071669449c8fd15e0fb4374f56a6c17d553f89b
+botocore==1.43.90 \
+    --hash=sha256:65f3394ef07314e45c92a90120988531d651136390d464a94938a92f665893f7 \
+    --hash=sha256:a139ed601e8b8fb1d730022355fe2b284b8c15cfe9ac0f100254a35d2273e1d3
     # via
     #   boto3
     #   s3transfer
