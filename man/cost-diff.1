@@ -1,0 +1,69 @@
+.TH COST\-DIFF 1 "2026-09" "cost-diff" "User Commands"
+.SH NAME
+cost-diff \- diff two AWS Cost Explorer periods into what changed, and why
+.SH SYNOPSIS
+.B cost-diff
+.RI [ options ]
+.SH DESCRIPTION
+Compares two AWS Cost Explorer periods and reports the movers: which
+services, accounts or usage types account for the difference, largest
+first \(em rather than a total that went up by an unexplained amount.
+.SH OPTIONS
+.TP
+.B \-\-last\-month
+The previous full month against the one before it.
+.TP
+.BI \-\-period " YYYY-MM"
+The period to analyse.
+.TP
+.BI \-\-vs " YYYY-MM"
+Baseline period. The default is the month before
+.BR \-\-period .
+.TP
+.BI \-\-group " DIMENSION"
+Cost Explorer dimension to group by; the default is SERVICE.
+.TP
+.BI \-\-metric " METRIC"
+Cost Explorer metric. The
+.B Net
+metrics net out credits and refunds;
+.B Amortized
+spreads reserved-instance and Savings Plan cost over its term.
+.TP
+.BI \-\-top " N"
+How many movers to show (default 10).
+.TP
+.BI \-\-threshold " N"
+Ignore changes under N dollars (default 1).
+.TP
+.BI \-\-slack " WEBHOOK"
+Post the report to Slack.
+.TP
+.B \-\-why
+Drill into the biggest mover by usage type. Only meaningful with
+.BR "\-\-group SERVICE" .
+.SH EXIT STATUS
+.TP
+.B 0
+A report was produced.
+.TP
+.B non-zero
+Cost Explorer could not be queried.
+.SH EXAMPLES
+.PP
+What changed last month, and why:
+.PP
+.RS
+.B cost-diff \-\-last\-month \-\-why
+.RE
+.PP
+Two named months, posted to Slack:
+.PP
+.RS
+.B cost-diff \-\-period 2026-06 \-\-vs 2026-05 \-\-slack "$WEBHOOK_URL"
+.RE
+.SH SEE ALSO
+.BR iam-shrink (1),
+.BR idle-hunter (1).
+Project documentation:
+https://github.com/fabiocicerchia/cost-diff
