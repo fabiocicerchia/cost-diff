@@ -4,9 +4,9 @@ basedpyright==1.39.10 \
     --hash=sha256:c8eaf5302f3265e275c7df4fba194d7afa7c1cb53fbfd448e90098360aca2c2e \
     --hash=sha256:cbd75d83c0be841329bcfef2d2f1182f152a6d975b8eb199e75cf5b8e9a3de78
     # via cost-diff (pyproject.toml)
-boto3==1.43.85 \
-    --hash=sha256:113b6e1aa3f5722f90c01fc63968c269a9b1fd03ac2594fe16c56a66e6331c5f \
-    --hash=sha256:f11bdaca18e59f53ec0529f4d6203dd1f0bb7ff165e51559d62fd863024abc9b
+boto3==1.43.86 \
+    --hash=sha256:94543a5ce482df8bb6a0bf8a944bf5ccf6625889b1df0d7886dfc3311ebd4169 \
+    --hash=sha256:aca7b5d7f31a90ad37bec773552ec9bfb57e0029c9aa0f0f4d51d5bf9607b1c4
     # via cost-diff (pyproject.toml)
 botocore==1.43.90 \
     --hash=sha256:65f3394ef07314e45c92a90120988531d651136390d464a94938a92f665893f7 \
