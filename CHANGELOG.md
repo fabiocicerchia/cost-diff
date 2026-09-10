@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0](https://github.com/fabiocicerchia/cost-diff/compare/v0.2.2...v0.3.0) (2026-09-10)
+
+
+### Features
+
+* **packaging:** ship a man page with the wheel ([#87](https://github.com/fabiocicerchia/cost-diff/issues/87)) ([64f920b](https://github.com/fabiocicerchia/cost-diff/commit/64f920ba2bfc48e4e65e072ab83d846cc0e91795))
+
+
+### Bug Fixes
+
+* **release:** grant id-token on the job that calls the signing workflow ([#92](https://github.com/fabiocicerchia/cost-diff/issues/92)) ([d8109e3](https://github.com/fabiocicerchia/cost-diff/commit/d8109e3341069684f5abc15bfbf5ab29484977d9))
+
 ## [0.2.2](https://github.com/fabiocicerchia/cost-diff/compare/v0.2.1...v0.2.2) (2026-09-08)
 
 
