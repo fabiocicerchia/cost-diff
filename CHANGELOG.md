@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.2](https://github.com/fabiocicerchia/cost-diff/compare/v0.3.1...v0.3.2) (2026-09-11)
+
+
+### Bug Fixes
+
+* **release:** let the release PR carry a token that isn't GITHUB_TOKEN ([#97](https://github.com/fabiocicerchia/cost-diff/issues/97)) ([89ad294](https://github.com/fabiocicerchia/cost-diff/commit/89ad2942a98a6cc21f0bdb41fcc96589d720c418))
+
 ## [0.3.1](https://github.com/fabiocicerchia/cost-diff/compare/v0.3.0...v0.3.1) (2026-09-10)
 
 
