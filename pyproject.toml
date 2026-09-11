@@ -46,8 +46,9 @@ line-length = 120
 
 [tool.ruff.lint]
 # U+2212 MINUS SIGN is deliberate in the money columns -- it is the character
-# that lines up with a digit, which a hyphen does not.
-allowed-confusables = ["−"]
+# that lines up with a digit, which a hyphen does not. U+03C3 SIGMA is the unit
+# the timeline reports a step size in; spelling it "sigma" in a table is worse.
+allowed-confusables = ["−", "σ"]
 select = [
   "E", "W", "F", "I", "N", "UP", "ANN", "ASYNC", "S", "B", "A", "C4", "DTZ",
   "T20", "PT", "RET", "SIM", "PTH", "ERA", "TD", "FIX", "PLR2004", "TRY", "PL", "RUF",

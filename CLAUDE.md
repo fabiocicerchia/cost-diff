@@ -4,10 +4,12 @@ Guidance for Claude Code (and other AI agents) working in this repo.
 
 ## Project
 
-`cost-diff` is a Python 3.10+ CLI that diffs two AWS Cost Explorer periods into
-a human-readable "what changed and why" report. Single module: `cost_diff.py`
-(entry point `cost_diff:main`, exposed as the `cost-diff` command). Tests live
-in `tests/`.
+`cost-diff` is a Python 3.10+ CLI with two subcommands. `timeline` (the lead
+feature) pulls daily AWS Cost Explorer cost, detects steps in it, and attributes
+each step to the deploy that preceded it — temporally, never causally. `diff` is
+the original period-over-period report. Single module: `cost_diff.py` (entry
+point `cost_diff:main`, exposed as the `cost-diff` command). Tests live in
+`tests/`.
 
 ## Commands
 
@@ -16,7 +18,8 @@ make dev     # editable install with dev deps (pytest, ruff, build)
 make test    # pytest -q
 make lint    # ruff check .
 make build   # python -m build
-cost-diff --last-month   # run
+cost-diff timeline --deploys-git .   # run the lead feature
+cost-diff diff --last-month          # run the period diff
 make help    # Show this help
 make setup   # Install the pre-commit hook
 make install # Install the package
@@ -46,4 +49,8 @@ make install # Install the package
 - Don't add dependencies without a clear reason; prefer stdlib. Runtime dep is
   just `boto3`.
 - The Cost Explorer client is injectable so tests mock it — keep it that way.
+- Step detection stays stdlib (`statistics`, `math`) and explainable; no numpy,
+  no ruptures. The report has to be able to say what it did.
+- Attribution is temporal, not causal. Don't let wording anywhere — output,
+  docs, commit messages — imply the tool knows a deploy caused a step.
 - Ask before large refactors or destructive operations.
