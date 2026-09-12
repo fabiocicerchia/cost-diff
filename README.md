@@ -110,8 +110,9 @@ which one produced it.
 - `--method median-mad` (default) — compare the median of the 7 days before each
   day with the median of the 7 days after. A step has to clear `4σ` of the
   window's own noise, measured as a median absolute deviation, so a service that
-  bounces around by 30% a day needs a bigger move to qualify than one that never
-  moves.
+  bounces around by 30% a day needs a bigger move to qualify than a steady one.
+  That noise estimate is floored at 2% of the level, because a bill that charges
+  the same round number every day has none for a step to have to beat.
 - `--method pelt` — a minimal [PELT][pelt] changepoint search (L2 segment cost,
   a `σ²·ln n` penalty, and the pruning that makes it PELT). Better when the
   series has several steps in it; slower to explain to a finance team.
@@ -122,13 +123,15 @@ filters:
 - **a dollar floor** (`--min-step`, default `$5/day`) — a step nobody would act on
   is not worth a name.
 - **a ramp guard** (`--ramp-fraction`, default `0.6`) — most of the level change
-  has to land inside the transition itself rather than trickle in. A straight
-  line sloping through the window only ever delivers a couple of days' worth of
-  its rise in two days, however steep it is, so **a gradual ramp is never
-  reported as a step**. Growing traffic is not a deploy.
+  has to land inside the transition itself rather than trickle in, measured
+  against what the series does over a horizon several times longer. A straight
+  line only ever delivers a couple of days' worth of its rise in two days,
+  however steep it is, so **a gradual ramp is never reported as a step**.
+  Growing traffic is not a deploy.
 
 A one-day spike fails both: it is not a new level, so the medians either side
-barely move.
+barely move. The day reported is the first one the new level holds, which is the
+day a deploy has to precede.
 
 ### Attribution and confidence
 
