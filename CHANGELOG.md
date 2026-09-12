@@ -4,6 +4,18 @@ All notable changes to this project are documented here. The format is based
 on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0](https://github.com/fabiocicerchia/cost-diff/compare/v0.3.2...v0.4.0) (2026-09-12)
+
+
+### Features
+
+* **timeline:** attribute daily cost steps to the deploy before them ([#99](https://github.com/fabiocicerchia/cost-diff/issues/99)) ([37962c2](https://github.com/fabiocicerchia/cost-diff/commit/37962c28b18fb8441f5db9bc729b08460c6dc808))
+
+
+### Documentation
+
+* add a Features section to the README ([#100](https://github.com/fabiocicerchia/cost-diff/issues/100)) ([34866d9](https://github.com/fabiocicerchia/cost-diff/commit/34866d908697eb4beeee7dfae985872c7c17fbc1))
+
 ## [0.3.2](https://github.com/fabiocicerchia/cost-diff/compare/v0.3.1...v0.3.2) (2026-09-11)
 
 
