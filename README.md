@@ -49,19 +49,27 @@ as the first place to look, not as the answer.
 
 ## Features
 
-- Diffs two **AWS Cost Explorer** periods into a "what changed and why"
-  report, rather than a dashboard you have to read.
-- Sorted by **absolute impact**, so the line that moved the bill is the first
-  one you see.
-- Flags services that are **new this period** — the `$0 → $400` rows that get
-  lost in a percentage view.
-- Groups by any Cost Explorer dimension: `--group LINKED_ACCOUNT` and friends.
-- Compares any two periods — `--last-month`, or `--period` against `--vs` for
-  a like-for-like month.
-- Posts straight to Slack with `--slack "$SLACK_WEBHOOK"`, which is the whole
-  setup for a monthly cron.
+- Finds the days daily cost **stepped to a new level** and names the deploy that
+  landed just before each one, rather than leaving you to line up two tabs.
+  Grouped by service, or by service and a **cost-allocation tag**.
+- Reads deploys from **git tags, the GitHub Deployments API, Argo CD history, or
+  a CSV** — whichever thing already records what shipped, and a file if nothing
+  does.
+- Grades each step by **how alone that deploy is** in the window, and lists every
+  candidate rather than guessing when several landed together.
+- Says **temporal, not causal** wherever it reports: the deploy preceded the
+  step, which makes it the first place to look, not the answer.
+- Two **explainable detectors** and no stats dependency — a rolling median with a
+  MAD threshold, or a minimal PELT — and the report says which one ran.
+- Never calls a **gradual ramp** a step, so growing traffic does not get blamed
+  on a release.
+- **Markdown, JSON, or a chart** (ASCII or Mermaid, deploy days marked), plus
+  `--pr-comment` to post a step on the pull request its deploy points at.
+- Still **diffs two periods** when that is the question: biggest mover first, new
+  services flagged, any Cost Explorer dimension (`--group LINKED_ACCOUNT`), any
+  two periods, and `--slack "$SLACK_WEBHOOK"` for a monthly cron.
 - Needs one IAM permission, `ce:GetCostAndUsage`, and the API calls cost
-  $0.01 each — a monthly run is effectively free.
+  $0.01 each — a 60-day timeline is effectively free.
 
 ## Install
 
