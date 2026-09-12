@@ -24,6 +24,22 @@ $ cost-diff --last-month --top 5
 ...
 ```
 
+## Features
+
+- Diffs two **AWS Cost Explorer** periods into a "what changed and why"
+  report, rather than a dashboard you have to read.
+- Sorted by **absolute impact**, so the line that moved the bill is the first
+  one you see.
+- Flags services that are **new this period** — the `$0 → $400` rows that get
+  lost in a percentage view.
+- Groups by any Cost Explorer dimension: `--group LINKED_ACCOUNT` and friends.
+- Compares any two periods — `--last-month`, or `--period` against `--vs` for
+  a like-for-like month.
+- Posts straight to Slack with `--slack "$SLACK_WEBHOOK"`, which is the whole
+  setup for a monthly cron.
+- Needs one IAM permission, `ce:GetCostAndUsage`, and the API calls cost
+  $0.01 each — a monthly run is effectively free.
+
 ## Install
 
 ```sh
