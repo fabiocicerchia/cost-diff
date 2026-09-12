@@ -54,8 +54,14 @@ estimate is floored at 2% of the level.
 
 **`pelt`** runs a minimal [PELT][pelt] search instead: the optimal segmentation
 under an L2 segment cost with a `σ²·ln n` penalty, with the pruning step that
-makes it PELT rather than plain optimal partitioning. It handles several steps
-in one series better, and is harder to explain to the person paying the bill.
+makes it PELT rather than plain optimal partitioning. That pruning waits out
+`--window-days`, which is PELT's minimum segment length here: dropping a start
+point the moment it looks worse is only sound when any day can be a
+changepoint, and costs optimality otherwise. It handles several steps in one
+series better, and is harder to explain to the person paying the bill.
+
+`--threshold-sigma` gates both methods; for `pelt` the noise it is measured
+against is the day-to-day one, estimated from first differences.
 
 Both feed the same two filters, which is what keeps the output short:
 
@@ -67,11 +73,17 @@ Both feed the same two filters, which is what keeps the output short:
   step, and neither is a one-day spike: both fail on the same ratio.
 
 Levels either side are medians of three days rather than single readings, so one
-odd day cannot make a ramp look like a step or the other way round.
+odd day cannot make a ramp look like a step or the other way round. The noise
+estimate is floored at 2% of the level for both methods, because a bill that
+charges the same round number every day has no day-to-day noise for a step to
+have to beat.
 
-Whichever method ran, the day reported is the first day cost actually moved: a
-rolling median can flag a step a day early and PELT a day late, so the candidate
-is walked back to the first day at least halfway to the new level.
+Whichever method ran, the day reported is the first day the new level holds: a
+rolling median can flag a step several days early when the days in between are
+noisy, and PELT can land a day late, so the candidate is walked to the first day
+that reaches the new level *and stays there*. One cheap day in the middle of an
+expensive fortnight cannot take the step — and the attribution window — with
+it.
 
 ## Attribution
 
@@ -106,7 +118,10 @@ timestamp,label,revision
 ```
 
 A CSV may also be headerless (`timestamp,label,revision,url` in that order), and
-JSON may be a list of objects or of `[timestamp, label]` pairs.
+JSON may be a list of objects, a list of `[timestamp, label]` pairs, or an object
+with the list under `deploys`. Column names are matched case-insensitively;
+timestamps are ISO 8601 (naive means UTC) or an epoch in seconds or
+milliseconds.
 
 ## Output
 

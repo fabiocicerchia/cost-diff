@@ -99,7 +99,8 @@ timestamp,label,revision
 
 JSON works too — a list of objects (`timestamp`/`time`/`date` plus
 `label`/`name`/`tag`) or a list of `[timestamp, label]` pairs. Timestamps are
-ISO 8601; a naive one is read as UTC.
+ISO 8601 (a naive one is read as UTC), or an epoch in seconds or
+milliseconds.
 
 ### What counts as a step
 
@@ -115,7 +116,8 @@ which one produced it.
   a `σ²·ln n` penalty, and the pruning that makes it PELT). Better when the
   series has several steps in it; slower to explain to a finance team.
 
-Both then have to pass the same two filters:
+`--threshold-sigma` applies to both. Both then have to pass the same two
+filters:
 
 - **a dollar floor** (`--min-step`, default `$5/day`) — a step nobody would act on
   is not worth a name.

@@ -468,23 +468,30 @@ class ResponseCache:
         return self.directory / f"{key}.json"
 
     def get(self, key: str) -> DailyCosts | None:
+        """The cached answer, or None — a miss and a corrupt entry are the same.
+
+        Decoding happens inside the guard: a half-written or hand-edited file
+        is a reason to ask Cost Explorer again, not to fail the run.
+        """
         try:
             payload = json.loads(self._path(key).read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            return None  # a missing or corrupt entry is a miss, not an error
-        stored_at = payload.get("stored_at")
-        costs = payload.get("costs")
-        if not isinstance(stored_at, (int, float)) or not isinstance(costs, dict):
+            stored_at = payload["stored_at"]
+            costs = payload["costs"]
+            if not isinstance(stored_at, (int, float)) or not isinstance(costs, dict):
+                return None
+            if (_utcnow().timestamp() - float(stored_at)) / 3600 > self.ttl_hours:
+                return None
+            return _decode_daily(cast("dict[str, dict[str, float]]", costs))
+        except (OSError, ValueError, TypeError, KeyError):
             return None
-        age_hours = (_utcnow().timestamp() - float(stored_at)) / 3600
-        if age_hours > self.ttl_hours:
-            return None
-        return _decode_daily(cast("dict[str, dict[str, float]]", costs))
 
     def put(self, key: str, costs: DailyCosts) -> None:
+        """Write the entry atomically, so a miss never becomes a corrupt hit."""
         self.directory.mkdir(parents=True, exist_ok=True)
         payload = {"stored_at": _utcnow().timestamp(), "costs": _encode_daily(costs)}
-        self._path(key).write_text(json.dumps(payload), encoding="utf-8")
+        pending = self._path(f"{key}.pending")
+        pending.write_text(json.dumps(payload), encoding="utf-8")
+        pending.replace(self._path(key))
 
 
 def _utcnow() -> datetime:
@@ -598,7 +605,13 @@ def _noise_sigma(values: Sequence[float]) -> float:
     diffs = [abs(second - first) for first, second in itertools.pairwise(values)]
     if not diffs:
         return _EPSILON_USD
-    return max(statistics.median(diffs) * MAD_TO_SIGMA / math.sqrt(2), _EPSILON_USD)
+    sigma = statistics.median(diffs) * MAD_TO_SIGMA / math.sqrt(2)
+    # Same floor as _noise_scale, for the same reason: a series that bills the
+    # same rounded amount every day has no day-to-day noise at all, and without
+    # a floor every cent of movement scores as thousands of sigmas while the
+    # PELT penalty collapses to nothing.
+    level = abs(statistics.median(values))
+    return max(sigma, level * NOISE_FLOOR_PCT / 100, _EPSILON_USD)
 
 
 def _sign(value: float) -> float:
@@ -688,7 +701,14 @@ def _pelt(values: Sequence[float], penalty: float, min_size: int) -> list[int]:
     best[0] = -penalty
     previous = [0] * (count + 1)
     starts = [0]
+    # A start that is already worse than the best path to `end` can still win
+    # over the few days where `end` is itself too close to be a legal start, so
+    # its removal is scheduled rather than immediate. Pruning at once is the
+    # textbook rule for a minimum segment length of one, and silently drops
+    # optimal segmentations for anything longer.
+    expires_at: dict[int, int] = {}
     for end in range(min_size, count + 1):
+        starts = [start for start in starts if expires_at.get(start, count + 1) > end]
         for start in starts:
             if end - start < min_size:
                 continue
@@ -697,7 +717,9 @@ def _pelt(values: Sequence[float], penalty: float, min_size: int) -> list[int]:
                 best[end], previous[end] = cost, start
         if math.isinf(best[end]):
             continue
-        starts = [s for s in starts if best[s] + segment_cost(s, end) <= best[end]]
+        for start in starts:
+            if start not in expires_at and best[start] + segment_cost(start, end) > best[end]:
+                expires_at[start] = end + min_size
         starts.append(end)
 
     breaks: list[int] = []
@@ -724,29 +746,43 @@ def _pelt_steps(values: Sequence[float], config: DetectionConfig) -> list[tuple[
         delta = level_after - level_before
         if abs(delta) < config.min_delta:
             continue
+        score = abs(delta) / sigma
+        if score < config.threshold:
+            continue
         if not _is_step_not_ramp(values, index, delta, config):
             continue
-        found.append((index, level_before, level_after, abs(delta) / sigma))
+        found.append((index, level_before, level_after, score))
     return found
 
 
 def _refine_onset(values: Sequence[float], index: int, before: float, after: float, config: DetectionConfig) -> int:
-    """The first day cost actually moved, within a transition of the candidate.
+    """The first day the new level holds, near the candidate.
 
     A rolling median reports a step as soon as most of its window sits at the
-    new level, which can be a day before the level changed; PELT can land a day
-    late for the mirror-image reason. Both are fixed by walking the candidate's
-    neighbourhood and taking the first day that is at least halfway to the new
-    level — that is the day a deploy has to precede.
+    new level, which can be several days before the level changed — half a
+    window, if the days in between are noisy — while PELT can land a day late
+    for the mirror-image reason. Both are fixed by walking the candidate's
+    neighbourhood and taking the first day that reaches the new level and stays
+    there: that is the day a deploy has to precede.
     """
     midpoint = (before + after) / 2
     direction = _sign(after - before)
-    for candidate in range(
-        max(0, index - config.transition_days), min(len(values), index + config.transition_days + 1)
-    ):
-        if (values[candidate] - midpoint) * direction >= 0:
-            return candidate
-    return index
+
+    def crossed(day: int) -> bool:
+        """True when this day and the next few are all at the new level.
+
+        The crossing has to hold: one odd day inside the transition would
+        otherwise move the reported step onto it, and the attribution window
+        with it.
+        """
+        window = values[day : day + _LOCAL_LEVEL_DAYS] or [values[day]]
+        return all((value - midpoint) * direction >= 0 for value in window)
+
+    first = max(0, index - config.transition_days)
+    # Forward as far as a median can lead the level change, back only as far as
+    # a transition: cost never moves before the day the detector pointed at.
+    last = min(len(values) - 1, index + max(config.transition_days, config.window // 2))
+    return next((day for day in range(first, last + 1) if crossed(day)), index)
 
 
 def detect_steps(
@@ -829,10 +865,20 @@ FILE_SOURCE = "file"
 # because a timeline is 60 days and a token is rate-limited.
 _GITHUB_DEPLOYMENT_PAGE = 100
 
+# Digit counts a bare number is read as an epoch at: seconds (a 10-digit
+# number is somewhere in 2001..2286) or milliseconds. Anything else is a date
+# someone wrote without separators, not an instant, so it goes to the ISO
+# parser and gets a message if that cannot read it either.
+_EPOCH_SECOND_DIGITS = 10
+_EPOCH_MILLISECOND_DIGITS = 13
+_EPOCH_DIGITS = frozenset({_EPOCH_SECOND_DIGITS, _EPOCH_MILLISECOND_DIGITS})
+
 _TIME_KEYS = ("timestamp", "time", "when", "date", "datetime", "deployed_at", "created_at", "at")
 _LABEL_KEYS = ("label", "name", "tag", "version", "release", "ref", "message")
 _REVISION_KEYS = ("revision", "sha", "commit")
-_URL_KEYS = ("url", "link", "html_url")
+# html_url first: the API endpoint is what `url` holds on a GitHub payload, and
+# a link in a report is for a person to click.
+_URL_KEYS = ("html_url", "url", "link")
 # The columns a headerless CSV or a JSON pair is read as, in order.
 _FILE_COLUMNS: tuple[str, ...] = ("timestamp", "label", "revision", "url")
 
@@ -870,8 +916,9 @@ def _parse_time(text: str) -> datetime:
     raw = text.strip()
     if not raw:
         raise CostDiffError("empty deploy timestamp")
-    if raw.isdigit():
-        return datetime.fromtimestamp(int(raw), tz=timezone.utc)
+    if raw.isdigit() and len(raw) in _EPOCH_DIGITS:
+        seconds = int(raw) / 1000 if len(raw) == _EPOCH_MILLISECOND_DIGITS else int(raw)
+        return datetime.fromtimestamp(seconds, tz=timezone.utc)
     if raw.endswith(("Z", "z")):
         raw = f"{raw[:-1]}+00:00"
     try:
@@ -892,7 +939,15 @@ def _load_json(text: str, what: str) -> Any:
 
 def _json_list(payload: Any, wrapper_key: str, complaint: str) -> list[Any]:
     """A JSON list, whether it came bare or wrapped in an object under one key."""
-    entries: Any = cast("dict[str, Any]", payload).get(wrapper_key, []) if isinstance(payload, dict) else payload
+    if isinstance(payload, dict):
+        mapping = cast("dict[str, Any]", payload)
+        if wrapper_key not in mapping:
+            # Defaulting to nothing here would turn a misnamed key into a
+            # report that confidently says no deploys happened.
+            raise CostDiffError(f"{complaint} — a JSON object needs them under {wrapper_key!r}")
+        entries: Any = mapping[wrapper_key]
+    else:
+        entries = payload
     if not isinstance(entries, list):
         raise CostDiffError(complaint)
     return cast("list[Any]", entries)
@@ -908,6 +963,29 @@ def _pick(row: dict[str, Any], keys: Sequence[str]) -> str | None:
     return None
 
 
+# refname, creator date, the ref's own object, and — for an annotated tag —
+# the commit it points at. `*objectname` is empty for a lightweight tag, whose
+# object already *is* the commit.
+_GIT_TAG_FORMAT = "%(refname:short)%09%(creatordate:iso-strict)%09%(objectname)%09%(*objectname)"
+_GIT_TAG_FIELDS = 4
+
+
+def _deploys_from_git_lines(output: str, pattern: str = "*") -> list[Deploy]:
+    """Parse `git for-each-ref` output in _GIT_TAG_FORMAT into deploys."""
+    deploys: list[Deploy] = []
+    for line in output.splitlines():
+        parts = line.split("\t")
+        if len(parts) != _GIT_TAG_FIELDS:
+            continue
+        name, when, own_sha, commit_sha = parts
+        if not fnmatch.fnmatch(name, pattern):
+            continue
+        # An annotated tag's own object is the tag, which no commit endpoint
+        # knows anything about: report the commit it points at instead.
+        deploys.append(Deploy(_parse_time(when), name, GIT_SOURCE, commit_sha.strip() or own_sha.strip()))
+    return deploys
+
+
 def deploys_from_git(repo: Path, pattern: str = "*") -> list[Deploy]:
     """Tags in a checkout, dated by when they were created.
 
@@ -921,20 +999,11 @@ def deploys_from_git(repo: Path, pattern: str = "*") -> list[Deploy]:
             str(repo),
             "for-each-ref",
             "--sort=creatordate",
-            "--format=%(refname:short)%09%(creatordate:iso-strict)%09%(objectname)",
+            f"--format={_GIT_TAG_FORMAT}",
             "refs/tags",
         ]
     )
-    deploys: list[Deploy] = []
-    for line in output.splitlines():
-        parts = line.split("\t")
-        if len(parts) != 3:  # noqa: PLR2004 — the three fields the format asks for
-            continue
-        name, when, sha = parts
-        if not fnmatch.fnmatch(name, pattern):
-            continue
-        deploys.append(Deploy(_parse_time(when), name, GIT_SOURCE, sha))
-    return deploys
+    return _deploys_from_git_lines(output, pattern)
 
 
 def deploys_from_github(repo: str) -> list[Deploy]:
@@ -978,6 +1047,9 @@ def deploys_from_argocd(app: str) -> list[Deploy]:
 
 
 def _deploy_from_row(row: dict[str, Any], where: str) -> Deploy:
+    # `Timestamp` is a timestamp column: the header sniff already reads case
+    # insensitively, so the lookup has to as well.
+    row = {str(key).strip().lower(): value for key, value in row.items()}
     when = _pick(row, _TIME_KEYS)
     if when is None:
         raise CostDiffError(f"{where}: no timestamp column — want one of {', '.join(_TIME_KEYS[:4])}")
@@ -1173,6 +1245,8 @@ def render_ascii_chart(
     height: int = 10,
 ) -> str:
     """A column chart in a fenced block, with a ▲ under every deploy day."""
+    if not days or not values:
+        return f"```text\n{title}\n(no days in range)\n```"
     low, high = min(values), max(values)
     span = (high - low) or 1.0
     columns = [((value - low) / span * height) for value in values]
@@ -1215,6 +1289,8 @@ def render_mermaid_chart(
     height: int = 10,  # unused: the two chart renderers share one signature
 ) -> str:
     """The same series as a Mermaid xychart, deploy days marked in the axis."""
+    if not days or not values:
+        return f"```text\n{title}\n(no days in range)\n```"
     marker = _chart_marker_row(days, deploys)
     labels = ", ".join(f'"{day.day:02d}{mark.strip()}"' for day, mark in zip(days, marker, strict=True))
     top = math.ceil(max(values) * 1.1) or 1
@@ -1310,6 +1386,9 @@ def timeline_json(report: TimelineReport) -> dict[str, Any]:
             "min_delta_usd_per_day": report.config.min_delta,
             "ramp_fraction": report.config.ramp_fraction,
             "transition_days": report.config.transition_days,
+            # Only PELT reads this one, but leaving it out would make two runs
+            # that differ only in the penalty serialise identically.
+            "pelt_penalty": report.config.penalty,
         },
         "attribution": {"window_hours": report.window_hours, "basis": TEMPORAL_DISCLAIMER},
         "steps": [
@@ -1388,15 +1467,22 @@ def comment_on_pull_requests(report: TimelineReport, repo: str, dry_run: bool = 
         if not deploy.revision:
             notes.append(f"{step.group} {step.day}: `{deploy.label}` has no revision to look a PR up by")
             continue
-        number = pr_for_revision(repo, deploy.revision)
-        if number is None:
-            notes.append(f"{step.group} {step.day}: no pull request points at `{deploy.label}`")
+        # One unreachable PR, one rate limit, one revision gh has never heard
+        # of: note it and carry on, the same as every other skip here. The
+        # alternative loses the comments for every step after this one.
+        try:
+            number = pr_for_revision(repo, deploy.revision)
+            if number is None:
+                notes.append(f"{step.group} {step.day}: no pull request points at `{deploy.label}`")
+                continue
+            body = render_pr_comment(attribution, report)
+            if dry_run:
+                notes.append(f"{step.group} {step.day}: would comment on {repo}#{number}:\n{body}")
+                continue
+            post_pr_comment(repo, number, body)
+        except CostDiffError as exc:
+            notes.append(f"{step.group} {step.day}: could not comment for `{deploy.label}`: {exc}")
             continue
-        body = render_pr_comment(attribution, report)
-        if dry_run:
-            notes.append(f"{step.group} {step.day}: would comment on {repo}#{number}:\n{body}")
-            continue
-        post_pr_comment(repo, number, body)
         notes.append(f"{step.group} {step.day}: commented on {repo}#{number}")
     return notes
 
@@ -1607,9 +1693,37 @@ def _run_diff(args: argparse.Namespace) -> int:
     return 0
 
 
+# (flag, attribute, minimum) for every timeline knob that would fail as
+# arithmetic — an empty median, a zero-length series — rather than just produce
+# a boring report if it goes too low.
+_TIMELINE_MINIMUMS: tuple[tuple[str, str, float], ...] = (
+    ("--days", "days", 1),
+    ("--window-days", "window_days", 2),
+    ("--transition-days", "transition_days", 1),
+    ("--chart-height", "chart_height", 1),
+    ("--deploy-window", "deploy_window", 0),
+    ("--cache-ttl", "cache_ttl", 0),
+)
+
+
+def _validate_timeline_args(args: argparse.Namespace) -> None:
+    """Say what is wrong with the flags, rather than failing inside a median."""
+    for flag, attribute, minimum in _TIMELINE_MINIMUMS:
+        value = float(getattr(args, attribute))
+        if value < minimum:
+            raise CostDiffError(f"{flag} must be at least {minimum:g}, got {value:g}")
+
+
 def _timeline_range(args: argparse.Namespace) -> tuple[date, date]:
     """[start, end) for the query. Today is excluded: it is a part day of cost."""
-    end = (date.fromisoformat(args.end) + timedelta(days=1)) if args.end else _utcnow().date()
+    if not args.end:
+        end = _utcnow().date()
+        return end - timedelta(days=args.days), end
+    try:
+        last = date.fromisoformat(args.end)
+    except ValueError as exc:
+        raise CostDiffError(f"--end {args.end!r} is not a date — want YYYY-MM-DD") from exc
+    end = last + timedelta(days=1)
     return end - timedelta(days=args.days), end
 
 
@@ -1641,6 +1755,7 @@ def _infer_repo(args: argparse.Namespace) -> str:
 
 def build_timeline_report(args: argparse.Namespace, client: CostExplorer | None = None) -> TimelineReport:
     """Pull the series, find the steps, pair them with deploys."""
+    _validate_timeline_args(args)
     start, end = _timeline_range(args)
     # Deploys first: reading them is free and local, and a typo in a path should
     # not cost a Cost Explorer call to find out about.

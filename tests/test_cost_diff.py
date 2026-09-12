@@ -1,5 +1,7 @@
 import argparse
+import itertools
 import json
+import math
 import random
 from collections.abc import Callable
 from datetime import date, datetime, timedelta, timezone
@@ -7,11 +9,15 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from _pytest.capture import CaptureFixture
+from _pytest.monkeypatch import MonkeyPatch
 
+import cost_diff
 from cost_diff import (
     MEDIAN_MAD,
     PELT,
     TOTAL_GROUP,
+    Attribution,
     CostDiffError,
     DailyQuery,
     Deploy,
@@ -19,6 +25,13 @@ from cost_diff import (
     ResponseCache,
     Step,
     TimelineReport,
+    # Three internals the regression tests below reach for directly: a
+    # property test of the PELT search, the noise floor it depends on, and the
+    # git output parser, which is the half of that source with no subprocess in
+    # it. Testing them through the CLI would test the CLI instead.
+    _deploys_from_git_lines,  # pyright: ignore[reportPrivateUsage]
+    _noise_sigma,  # pyright: ignore[reportPrivateUsage]
+    _pelt,  # pyright: ignore[reportPrivateUsage]
     attribute,
     build_diff,
     build_timeline_report,
@@ -691,3 +704,185 @@ def test_ascii_chart_survives_a_flat_and_short_series() -> None:
     chart = render_ascii_chart(days, [10.0] * 5, [], "TOTAL", height=4)
     assert "2026-07-13 → 2026-07-17" in chart
     assert chart.endswith("```")
+
+
+# --------------------------------------------------------------------------
+# Regressions: each of these was a real defect in the first cut.
+# --------------------------------------------------------------------------
+
+
+def _optimal_partition_cost(values: list[float], penalty: float, min_size: int) -> float:
+    """Brute-force optimal partitioning — what PELT's pruning has to preserve."""
+    count = len(values)
+    best: dict[int, float] = {0: -penalty}
+    for end in range(min_size, count + 1):
+        reachable = [start for start in range(end - min_size + 1) if start in best]
+        if reachable:
+            best[end] = min(best[start] + _segment_cost(values, start, end) + penalty for start in reachable)
+    return best[count]
+
+
+def _segment_cost(values: list[float], start: int, end: int) -> float:
+    segment = values[start:end]
+    total = sum(segment)
+    return sum(value * value for value in segment) - total * total / len(segment)
+
+
+def _segmentation_cost(values: list[float], breaks: list[int], penalty: float) -> float:
+    bounds = [0, *breaks, len(values)]
+    return sum(_segment_cost(values, a, b) + penalty for a, b in itertools.pairwise(bounds)) - penalty
+
+
+@pytest.mark.parametrize("min_size", [1, 3, 7])
+def test_pelt_returns_the_optimal_segmentation(min_size: int) -> None:
+    # Pruning a start point the moment it looks worse is only sound when any
+    # day can be a changepoint. With a minimum segment length it has to wait
+    # that long, or PELT quietly returns a costlier segmentation than promised.
+    rng = random.Random(4)  # noqa: S311 — a fixture, not a secret
+    for _ in range(40):
+        count = rng.randint(18, 30)
+        values = [rng.gauss(100, 8) for _ in range(count)]
+        for index in range(rng.randint(7, count - 7), count):
+            values[index] += rng.choice([35, -35])
+        penalty = 3 * _noise_sigma(values) ** 2 * math.log(count)
+        breaks = _pelt(values, penalty, min_size)
+        assert _segmentation_cost(values, breaks, penalty) == pytest.approx(
+            _optimal_partition_cost(values, penalty, min_size)
+        )
+
+
+@pytest.mark.parametrize("method", METHODS)
+def test_one_odd_day_does_not_move_the_step_onto_itself(method: str) -> None:
+    # $200/day drops to $100/day on 2026-08-22, with one cheap day a fortnight
+    # earlier. Reporting the step on the cheap day would put the attribution
+    # window on whatever shipped then.
+    values = [200.0] * STEP_DAY + [100.0] * (len(DAYS) - STEP_DAY)
+    values[STEP_DAY - 2] = 140.0
+    [step] = detect_steps("Amazon EC2", DAYS, values, DetectionConfig(method=method))
+    assert step.day == DAYS[STEP_DAY]
+
+
+def test_threshold_sigma_applies_to_pelt_too() -> None:
+    values = clean_step()
+    assert detect_steps("Amazon EC2", DAYS, values, DetectionConfig(method=PELT))
+    assert detect_steps("Amazon EC2", DAYS, values, DetectionConfig(method=PELT, threshold=1_000)) == []
+
+
+def test_noise_estimate_is_floored_on_a_perfectly_quantised_series() -> None:
+    # Every day billing the same round number means no day-to-day noise at all.
+    # Unfloored, the step scores in the thousands of sigmas and PELT's penalty
+    # collapses to nothing.
+    values = [100.0] * STEP_DAY + [141.0] * (len(DAYS) - STEP_DAY)
+    assert _noise_sigma(values) == pytest.approx(2.0)  # 2% of the $100/day median
+    for method in METHODS:
+        [step] = detect_steps("Amazon EC2", DAYS, values, DetectionConfig(method=method))
+        assert step.score < 100
+
+
+def test_annotated_tag_reports_the_commit_not_the_tag_object() -> None:
+    # `git for-each-ref` gives an annotated tag's own SHA in %(objectname) and
+    # the commit in %(*objectname). Reporting the former prints a SHA no commit
+    # endpoint has heard of, and --pr-comment 422s on it.
+    lines = (
+        "v2.13\t2026-08-01T09:00:00+00:00\t1111111111111111111111111111111111111111\t\n"
+        "v2.14\t2026-09-02T18:00:00+00:00\t"
+        "2222222222222222222222222222222222222222\t3333333333333333333333333333333333333333\n"
+    )
+    lightweight, annotated = _deploys_from_git_lines(lines)
+    assert lightweight.revision == "1" * 40  # no tag object: its own SHA is the commit
+    assert annotated.revision == "3" * 40  # the commit the tag points at
+    assert [d.label for d in _deploys_from_git_lines(lines, "v2.14")] == ["v2.14"]
+
+
+def test_a_misnamed_json_wrapper_key_is_an_error_not_an_empty_timeline(tmp_path: Path) -> None:
+    path = tmp_path / "deploys.json"
+    path.write_text(json.dumps({"deployments": [{"time": "2026-08-21T18:00:00Z", "label": "v2.14"}]}), encoding="utf-8")
+    with pytest.raises(CostDiffError, match="'deploys'"):
+        deploys_from_file(path)
+
+
+def test_csv_header_is_read_case_insensitively(tmp_path: Path) -> None:
+    path = tmp_path / "deploys.csv"
+    path.write_text("Timestamp,Label,Revision\n2026-08-21T18:00:00Z,v2.14,9f3a1c2\n", encoding="utf-8")
+    [deploy] = deploys_from_file(path)
+    assert (deploy.label, deploy.revision) == ("v2.14", "9f3a1c2")
+
+
+def test_epoch_timestamps_in_seconds_and_milliseconds(tmp_path: Path) -> None:
+    path = tmp_path / "deploys.csv"
+    path.write_text(
+        "timestamp,label\n1756800000,seconds\n1756800000000,millis\n",
+        encoding="utf-8",
+    )
+    seconds, millis = deploys_from_file(path)
+    assert seconds.when == millis.when == datetime(2025, 9, 2, 8, 0, tzinfo=timezone.utc)
+
+
+def test_a_number_that_is_not_an_epoch_gets_the_iso_message(tmp_path: Path) -> None:
+    path = tmp_path / "deploys.csv"
+    path.write_text("timestamp,label\n175680000000,v1\n", encoding="utf-8")
+    with pytest.raises(CostDiffError, match="ISO 8601"):
+        deploys_from_file(path)
+
+
+def test_a_corrupt_cache_entry_is_a_miss(tmp_path: Path) -> None:
+    cache = ResponseCache(tmp_path, ttl_hours=24)
+    query = DailyQuery(START, START + timedelta(days=5))
+    (tmp_path / f"{query.key()}.json").write_text(
+        json.dumps({"stored_at": 9e9, "costs": {"EC2": {"not-a-date": 1.0}}}),
+        encoding="utf-8",
+    )
+    client = FakeDailyCE()
+    assert fetch_daily_costs(query, client=client, cache=cache)  # asked AWS instead of raising
+    assert len(client.calls) == 1
+
+
+def test_one_unreachable_pull_request_does_not_drop_the_other_steps(tmp_path: Path, monkeypatch: MonkeyPatch) -> None:
+    report = report_with("timestamp,label,revision\n2026-08-21T18:00:00Z,v2.14,9f3a1c2\n", tmp_path)
+    later = Attribution(
+        Step("Amazon RDS", DAYS[50], 100.0, 160.0, 60.0, 9.0, MEDIAN_MAD),
+        [deploy_at("2026-08-31T18:00:00", "v2.15", "abc1234")],
+    )
+    both = TimelineReport(
+        query=report.query,
+        config=report.config,
+        window_hours=report.window_hours,
+        days=report.days,
+        series=report.series,
+        attributions=[*report.attributions, later],
+        deploys=report.deploys,
+    )
+
+    def explode(repo: str, revision: str) -> int | None:
+        if revision.startswith("9f3a1c2"):
+            raise CostDiffError("gh failed: HTTP 422 no commit found")
+        return 7
+
+    monkeypatch.setattr(cost_diff, "pr_for_revision", explode)
+    first, second = comment_on_pull_requests(both, "acme/api", dry_run=True)
+    assert "could not comment for `v2.14`" in first
+    assert "would comment on acme/api#7" in second
+
+
+@pytest.mark.parametrize(
+    ("argv", "complaint"),
+    [
+        (["timeline", "--days", "0"], "--days must be at least 1"),
+        (["timeline", "--days", "-5"], "--days must be at least 1"),
+        (["timeline", "--window-days", "1"], "--window-days must be at least 2"),
+        (["timeline", "--chart-height", "0"], "--chart-height must be at least 1"),
+        (["timeline", "--end", "2026-9-1"], "not a date"),
+    ],
+)
+def test_bad_timeline_flags_are_reported_not_raised(
+    argv: list[str], complaint: str, capsys: CaptureFixture[str]
+) -> None:
+    # Each of these used to escape as a traceback out of a median, a min(), or
+    # date.fromisoformat — after the Cost Explorer call had been paid for.
+    assert cost_diff.main(argv) == 1
+    assert complaint in capsys.readouterr().err
+
+
+def test_chart_of_an_empty_range_says_so_instead_of_raising() -> None:
+    assert "(no days in range)" in render_ascii_chart([], [], [], "TOTAL")
+    assert "(no days in range)" in render_mermaid_chart([], [], [], "TOTAL")
