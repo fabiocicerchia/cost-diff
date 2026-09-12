@@ -1,14 +1,123 @@
 .TH COST\-DIFF 1 "2026-09" "cost-diff" "User Commands"
 .SH NAME
-cost-diff \- diff two AWS Cost Explorer periods into what changed, and why
+cost-diff \- which deploy moved the AWS bill
 .SH SYNOPSIS
-.B cost-diff
+.B cost-diff timeline
+.RI [ options ]
+.br
+.B cost-diff diff
 .RI [ options ]
 .SH DESCRIPTION
-Compares two AWS Cost Explorer periods and reports the movers: which
-services, accounts or usage types account for the difference, largest
-first \(em rather than a total that went up by an unexplained amount.
-.SH OPTIONS
+.B cost-diff timeline
+pulls daily cost from AWS Cost Explorer, finds the days it stepped to a new
+level, and names the deploy that landed just before each step \(em from git
+tags, the GitHub Deployments API, Argo CD history, or a CSV or JSON file.
+.PP
+Attribution is temporal, not causal: the deploy preceded the step, which is
+not proof that it caused it. A step can as easily be a traffic spike, a
+retention policy or an expired credit.
+.PP
+.B cost-diff diff
+is the original report: two Cost Explorer periods, and which services,
+accounts or usage types account for the difference, largest first. Invoking
+.B cost-diff
+with a flag and no subcommand still runs it.
+.SH TIMELINE OPTIONS
+.TP
+.BI \-\-days " N"
+Days of daily cost to pull (default 60).
+.TP
+.BI \-\-end " YYYY-MM-DD"
+Last day to include. The default is yesterday; today is a part day of cost.
+.TP
+.BI \-\-group " DIMENSION"
+Cost Explorer dimension to group by; the default is SERVICE.
+.TP
+.BI \-\-tag " KEY"
+Also group by this cost-allocation tag key.
+.TP
+.BI \-\-method " METHOD"
+.B median-mad
+(default) compares rolling medians against the window's own noise;
+.B pelt
+runs a minimal PELT changepoint search. The report says which one ran.
+.TP
+.BI \-\-window\-days " N"
+Days either side of a candidate step (default 7).
+.TP
+.BI \-\-threshold\-sigma " N"
+How far past the window's noise a step must be (default 4).
+.TP
+.BI \-\-min\-step " N"
+Ignore steps under N dollars a day (default 5).
+.TP
+.BI \-\-ramp\-fraction " F"
+Share of the level change that must land inside the transition (default 0.6).
+This is what keeps a gradual ramp from being reported as a step.
+.TP
+.BI \-\-transition\-days " N"
+Days a step may take to complete (default 2): a deploy part-way through a day
+bills a part day.
+.TP
+.BI \-\-pelt\-penalty " F"
+PELT penalty, in multiples of sigma squared times ln n (default 3).
+.TP
+.BI \-\-deploys\-git " [PATH]"
+Tags in a git checkout, dated by when they were created.
+.TP
+.BI \-\-deploys\-github " OWNER/REPO"
+The GitHub Deployments API, read through
+.BR gh .
+.TP
+.BI \-\-deploys\-argocd " APP"
+.B argocd app history
+for one application.
+.TP
+.BI \-\-deploys\-file " PATH"
+A CSV or JSON list of timestamp and label.
+.TP
+.BI \-\-tag\-pattern " GLOB"
+Which git tags count as deploys (default: all).
+.TP
+.BI \-\-deploy\-match " GLOB"
+Keep only deploys whose label matches, whatever the source.
+.TP
+.BI \-\-deploy\-window " HOURS"
+How far before a step to look for deploys (default 24). The step day itself is
+always included.
+.TP
+.BI \-\-format " FORMAT"
+.B markdown
+(default) or
+.BR json .
+.TP
+.BI \-\-chart " KIND"
+.BR ascii " (default), " mermaid " or " none .
+.TP
+.BI \-\-chart\-group " GROUP"
+Which series to chart; the default is the total.
+.TP
+.B \-\-pr\-comment
+Post each confidently attributed step on the pull request its deploy points
+at, via
+.BR gh .
+Only steps with a single deploy in the window are posted.
+.TP
+.BI \-\-repo " OWNER/REPO"
+Repository for
+.BR \-\-pr\-comment ,
+when it cannot be inferred.
+.TP
+.B \-\-dry\-run
+With
+.BR \-\-pr\-comment ,
+print the comments instead of posting them.
+.TP
+.BI \-\-cache\-dir " PATH"
+Cache Cost Explorer answers here; see
+.BR \-\-cache\-ttl .
+This is the only state the tool keeps.
+.SH DIFF OPTIONS
 .TP
 .B \-\-last\-month
 The previous full month against the one before it.
@@ -48,19 +157,25 @@ Drill into the biggest mover by usage type. Only meaningful with
 A report was produced.
 .TP
 .B non-zero
-Cost Explorer could not be queried.
+Cost Explorer could not be queried, or a deploy source could not be read.
 .SH EXAMPLES
+.PP
+Which deploy moved the bill, from the tags in this checkout:
+.PP
+.RS
+.B cost-diff timeline \-\-deploys\-git . \-\-tag\-pattern 'v*'
+.RE
+.PP
+Ninety days, deploys from a file, as JSON:
+.PP
+.RS
+.B cost-diff timeline \-\-days 90 \-\-deploys\-file deploys.csv \-\-format json
+.RE
 .PP
 What changed last month, and why:
 .PP
 .RS
-.B cost-diff \-\-last\-month \-\-why
-.RE
-.PP
-Two named months, posted to Slack:
-.PP
-.RS
-.B cost-diff \-\-period 2026-06 \-\-vs 2026-05 \-\-slack "$WEBHOOK_URL"
+.B cost-diff diff \-\-last\-month \-\-why
 .RE
 .SH SEE ALSO
 .BR iam-shrink (1),

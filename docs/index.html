@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>cost-diff — Diffs two AWS Cost Explorer periods into a plain-English report.</title>
-<meta name="description" content="&quot;What changed and why&quot; — sorted by absolute impact, new services flagged, postable to Slack. The monthly bill autopsy, automated.">
+<title>cost-diff — Which deploy moved the AWS bill.</title>
+<meta name="description" content="Finds the days daily AWS cost stepped to a new level and names the deploy that landed just before each one — from git tags, GitHub Deployments, Argo CD or a CSV. Attribution is temporal, not causal.">
 <!-- The palette lives in the docs theme, so the splash and /docs/ cannot drift
      apart. The path is relative to the *deployed* layout: splash at /, rendered
      docs at /docs/. -->
@@ -44,10 +44,16 @@ footer{margin-top:2.2rem;color:#5c6684;font-size:.82rem}
 <body>
 <div class="card">
   <h1>💸 cost-diff</h1>
-  <p class="tagline">Diffs two AWS Cost Explorer periods into a plain-English report.</p>
+  <p class="tagline">Which deploy moved the AWS bill.</p>
   <p class="desc">
-    &quot;What changed and why&quot; — sorted by absolute impact, new services flagged, postable to Slack. The monthly
-    bill autopsy, automated.
+    Pulls daily cost from AWS Cost Explorer, finds the days a service stepped to a new level, and names the deploy
+    that landed just before each step — from git tags, the GitHub Deployments API, Argo CD history, or a CSV anyone
+    can write. Markdown, JSON or a chart; read-only access, no server, no state. The period-over-period report is
+    still here as <code>cost-diff diff</code>.
+  </p>
+  <p class="alt">
+    Attribution is temporal, not causal: the deploy preceded the step, which makes it the first place to look
+    rather than the answer.
   </p>
   <div class="install-label">Install</div>
   <pre><code>curl -fsSL https://raw.githubusercontent.com/fabiocicerchia/cost-diff/main/install.sh | bash</code></pre>
