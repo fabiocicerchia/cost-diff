@@ -19,12 +19,12 @@ Feature: Reading the timeline report
     Given Amazon EC2 stepped from $100/day to $141/day on 2026-08-22
     And deploy v2.14 with revision 9f3a1c2 landed at 2026-08-21T18:00Z
     When the operator runs the timeline
-    Then the step reads "+$41/day in Amazon EC2 starting 2026-08-22, 6h after `v2.14` — one deploy in window, high confidence."
+    Then the step reads "**+$41/day in Amazon EC2 starting 2026-08-22**, 6h after `v2.14` — one deploy in window, high confidence."
     And below it: "$100/day → $141/day (+41%), <n>σ over the window's noise"
     And below it: "`v2.14` — 2026-08-21T18:00Z (`9f3a1c2`, file, 6h before the step day)"
 
   @id:timeline-reporting.timeline-text.003 @rule:timeline.text.lag-in-readable-units @inferred @source:cost_diff.py#_hours
-  Scenario Outline: The time between deploy and step is shown in hours, or days past 48 hours
+  Scenario Outline: The time between deploy and step is shown in hours, or in days from 48 hours on
     Given the only deploy in the window landed <lag> before the step day
     When the operator runs the timeline with --deploy-window 72
     Then the headline says "<shown> after `v2.14`"

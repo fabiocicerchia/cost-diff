@@ -3,7 +3,7 @@ Feature: Running cost-diff from the command line
   Gives operators two subcommands with documented defaults while keeping old diff command lines working.
 
   @id:cli.subcommands.001 @rule:cli.legacy.leading-flag-means-diff @verified @source:cost_diff.py#normalise_argv @test:tests/test_cost_diff.py#test_bare_flags_still_mean_the_diff_subcommand
-  Scenario Outline: An old command line that starts with a flag still runs the diff
+  Scenario Outline: An old command line that starts with a flag other than --help still runs the diff
     When the operator runs cost-diff <args>
     Then it runs <runs>
 

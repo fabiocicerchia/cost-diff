@@ -9,13 +9,13 @@ Feature: Running cost-diff from the container image
   Scenario Outline: Arguments given to the container go straight to the cost-diff command
     When the operator runs the container with the arguments "<arguments>"
     Then the cost-diff command runs with "<arguments>"
-    And the output is the same as running "cost-diff <arguments>" from an installed copy
+    And the output is the same as running "cost-diff <arguments>" from an installed copy, given the same AWS credentials and files are available inside the container
 
     Examples:
-      | arguments                |
-      | timeline --deploys-git . |
-      | diff --last-month        |
-      | --help                   |
+      | arguments                             |
+      | timeline --deploys-file deploys.csv   |
+      | diff --last-month                     |
+      | --help                                |
 
   @id:operations.container-image.002 @rule:operations.container-image.runs-as-non-root @inferred @source:Dockerfile#USER
   Scenario: The container runs the CLI as an unprivileged user

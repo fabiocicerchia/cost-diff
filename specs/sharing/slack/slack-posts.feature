@@ -11,7 +11,7 @@ Feature: Posting the diff to Slack
     Then the Markdown report is printed first
     And Slack receives a header "AWS cost diff: 2026-05 → 2026-06"
     And then "*Total:* $100 → $250 (▲ $150)" in Slack's own bold
-    And then a code block with "+$150 EC2: $100 → $250", one line per mover up to --top, ⚠ after flagged ones
+    And then a code block with "+$150 EC2: $100 → $250", one line per mover up to --top, with ⚠ right after the amount on flagged ones
 
   @id:sharing.slack.002 @rule:sharing.slack.https-webhooks-only @inferred @source:cost_diff.py#post_slack @questionable
   Scenario: A Slack webhook that is not https is refused

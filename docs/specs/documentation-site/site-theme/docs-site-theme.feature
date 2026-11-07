@@ -3,29 +3,29 @@ Feature: Presenting the documentation in one consistent, offline-safe theme
   Gives readers of the cost-diff docs and splash page one recognisable look in light and dark mode without the pages fetching anything from third-party servers.
 
   Background:
-    Given Given the cost-diff documentation site and splash page are published
+    Given the cost-diff documentation site and splash page are published
 
   @id:docs.documentation-site.site-theme.001 @rule:documentation-site.site-theme.no-network-assets @inferred @source:docs/stylesheets/extra.css#:root
   Scenario: The docs render with system fonts and fetch no web fonts
-    Given Given the reader's device has its own system fonts
-    When When a reader opens any documentation page
-    Then Then body text is shown in the device's system sans-serif font
-    And And code is shown in the device's system monospace font
-    And And no font or stylesheet is downloaded from a third-party server
+    Given the reader's device has its own system fonts
+    When a reader opens any documentation page
+    Then body text is shown in the device's system sans-serif font
+    And code is shown in the device's system monospace font
+    And no font or stylesheet is downloaded from a third-party server
 
   @id:docs.documentation-site.site-theme.002 @rule:documentation-site.site-theme.shared-accent-palette @inferred @source:docs/stylesheets/extra.css#:root
   Scenario: The splash page and the docs use the same accent colours
-    Given Given the theme's accent pair is cyan #22d3ee and indigo #6366f1
-    When When a reader moves from the splash page to the docs
-    Then Then the splash title and its buttons blend cyan into indigo
-    And And the docs header, home title and primary buttons use the same cyan and indigo pair
+    Given the theme's accent pair is cyan #22d3ee and indigo #6366f1
+    When a reader moves from the splash page to the docs
+    Then the splash title and its buttons blend cyan into indigo
+    And the docs home title and primary buttons blend the same cyan into indigo
 
   @id:docs.documentation-site.site-theme.003 @rule:documentation-site.site-theme.legible-links-per-scheme @inferred @source:docs/stylesheets/extra.css#[data-md-color-scheme="slate"]
   Scenario Outline: Links stay legible in both light and dark mode
-    Given Given the reader has chosen <mode> mode
-    When When a reader opens any documentation page
-    Then Then the page background is <background>
-    And And links are shown in <link colour>
+    Given the reader has chosen <mode> mode
+    When a reader opens any documentation page
+    Then the page background is <background>
+    And links are shown in <link colour>
 
     Examples:
       | mode  | background         | link colour    |
@@ -34,14 +34,14 @@ Feature: Presenting the documentation in one consistent, offline-safe theme
 
   @id:docs.documentation-site.site-theme.004 @rule:documentation-site.site-theme.no-stand-in-logo @inferred @source:docs/stylesheets/extra.css#.md-header__button.md-logo
   Scenario: The docs header shows no placeholder logo
-    Given Given the project has no logo configured
-    When When a reader opens any documentation page
-    Then Then the header and the navigation title show no logo icon
-    And And the generic book icon the theme would substitute is not shown
+    Given the project has no logo configured
+    When a reader opens any documentation page
+    Then the header and the navigation title show no logo icon
+    And the generic book icon the theme would substitute is not shown
 
   @id:docs.documentation-site.site-theme.005 @rule:documentation-site.site-theme.wide-tables-scroll @inferred @source:docs/stylesheets/extra.css#.md-typeset table:not([class]) @questionable
   Scenario: Wide tables on narrow screens scroll rather than being cut off
-    Given Given a documentation page contains a table wider than the reader's screen
-    When When a reader opens that page on a narrow screen
-    Then Then the table is shown as a rounded, bordered card
-    And And the columns beyond the screen edge can be reached by scrolling sideways
+    Given a documentation page contains a table wider than the reader's screen
+    When a reader opens that page on a narrow screen
+    Then the table is shown as a rounded, bordered card
+    And the columns beyond the screen edge can be reached by scrolling sideways

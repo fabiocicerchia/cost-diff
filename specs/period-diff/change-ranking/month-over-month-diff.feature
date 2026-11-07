@@ -58,12 +58,12 @@ Feature: Comparing a month's AWS cost with an earlier month
   @id:period-diff.change-ranking.005 @rule:cost-data.metrics.chosen-metric-is-reported @verified @source:cost_diff.py#fetch_costs @test:tests/test_cost_diff.py#test_fetch_costs_uses_selected_metric
   Scenario Outline: The operator chooses which cost measure is compared
     Given Cost Explorer reports both unblended and amortized cost
-    When the operator runs cost-diff <command> with --metric <metric>
+    When the operator runs cost-diff <command> <flags>
     Then the costs shown are the <metric> amounts
     And <named>
 
     Examples:
-      | command  | metric           | named                                                         |
-      | diff     | AmortizedCost    | the diff table holds amortized amounts                        |
-      | timeline | NetUnblendedCost | the timeline says "Daily NetUnblendedCost from Cost Explorer" |
-      | timeline | (none given)     | the timeline says "Daily UnblendedCost from Cost Explorer"    |
+      | command  | flags                     | metric           | named                                                         |
+      | diff     | --metric AmortizedCost    | AmortizedCost    | the diff table holds amortized amounts                        |
+      | timeline | --metric NetUnblendedCost | NetUnblendedCost | the timeline says "Daily NetUnblendedCost from Cost Explorer" |
+      | timeline | with no --metric          | UnblendedCost    | the timeline says "Daily UnblendedCost from Cost Explorer"    |

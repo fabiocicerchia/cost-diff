@@ -10,7 +10,7 @@ Feature: Reading the period diff report
     Given the listed services cost <before> in 2026-05 and <after> in 2026-06
     When the operator runs the diff
     Then the title is "# AWS cost diff: 2026-05 → 2026-06"
-    And the total line reads "Total: <before> → <after> (<trend>)"
+    And the total line reads "**Total: <before> → <after> (<trend>)**"
 
     Examples:
       | before | after | trend  |
@@ -23,7 +23,7 @@ Feature: Reading the period diff report
     Given EC2 went from $100 to $250
     And S3 went from $50 to $50.50
     When the operator runs the diff with the default $1 threshold
-    Then the total line reads "Total: $100 → $250 (▲ $150)"
+    Then the total line reads "**Total: $100 → $250 (▲ $150)**"
     And S3's $50 is in neither side of the total
 
   @id:period-diff.diff-report.003 @rule:period-diff.report.top-n-with-hidden-count @verified @source:cost_diff.py#render @test:tests/test_cost_diff.py#test_render_hidden_rows_message_blames_top_not_threshold
@@ -40,8 +40,8 @@ Feature: Reading the period diff report
     Then its row reads "<row>"
 
     Examples:
-      | service | before | after | row                                   |
-      | EC2     | $100   | $250  | | +$150 (+150%) | EC2 | $100 | $250 | |
-      | S3      | $100   | $60   | | −$40 (-40%) | S3 | $100 | $60 |     |
-      | RDS     | $0     | $200  | | +$200 (new) | RDS | $0 | $200 |     |
-      | Lambda  | $80    | $80   | | −$0 (+0%) | Lambda | $80 | $80 |    |
+      | service | before | after | row                                           |
+      | EC2     | $100   | $250  | \| +$150 (+150%) \| EC2 \| $100 \| $250 \|   |
+      | S3      | $100   | $60   | \| −$40 (-40%) \| S3 \| $100 \| $60 \|       |
+      | RDS     | $0     | $200  | \| +$200 (new) \| RDS \| $0 \| $200 \|       |
+      | Lambda  | $80    | $80   | \| −$0 (+0%) \| Lambda \| $80 \| $80 \|      |
