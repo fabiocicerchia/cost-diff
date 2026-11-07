@@ -1,0 +1,242 @@
+{
+ "excluded": {
+  "stylesheets/extra": [
+   {
+    "candidate": "Translucent blurred header with hairline divider and shadow on scroll",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "docs/stylesheets/extra.css#.md-header"
+   },
+   {
+    "candidate": "Heading weights, letter-spacing and font feature settings",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset h1"
+   },
+   {
+    "candidate": "Rounded, bordered code blocks",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset .highlight"
+   },
+   {
+    "candidate": "Pill-shaped buttons with lift-on-hover animation",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset .md-button"
+   },
+   {
+    "candidate": "Home hero gradient title and tagline layout",
+    "covered_by": "documentation-site.site-theme.shared-accent-palette",
+    "reason": "DUPLICATE_OF",
+    "source": "docs/stylesheets/extra.css#.md-typeset .hero h1"
+   },
+   {
+    "candidate": "Feature cards lift, tint their border and show accent-coloured icons on hover",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-typeset .grid.cards > ul > li"
+   },
+   {
+    "candidate": "Tab link opacity, active nav weight, footer colours",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#.md-tabs__link"
+   },
+   {
+    "candidate": "Smooth scrolling to anchors",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "docs/stylesheets/extra.css#html"
+   },
+   {
+    "candidate": "Guidance on choosing the accent pair by project cluster",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "docs/stylesheets/extra.css#:root"
+   }
+  ]
+ },
+ "lifted": {
+  "stylesheets/extra": [
+   {
+    "from_source": "mkdocs.yml#theme",
+    "rule": "documentation-site.site-theme.no-network-assets"
+   }
+  ]
+ },
+ "retired": [],
+ "scenarios": {
+  "docs.documentation-site.site-theme.001": {
+   "file": "docs/specs/documentation-site/site-theme/docs-site-theme.feature",
+   "fingerprint": "d1e8fee7d3b2",
+   "human": false,
+   "rule": "documentation-site.site-theme.no-network-assets",
+   "source": "docs/stylesheets/extra.css#:root",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "docs.documentation-site.site-theme.002": {
+   "file": "docs/specs/documentation-site/site-theme/docs-site-theme.feature",
+   "fingerprint": "d1e8fee7d3b2",
+   "human": false,
+   "rule": "documentation-site.site-theme.shared-accent-palette",
+   "source": "docs/stylesheets/extra.css#:root",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "docs.documentation-site.site-theme.003": {
+   "file": "docs/specs/documentation-site/site-theme/docs-site-theme.feature",
+   "fingerprint": "433084a194b6",
+   "human": false,
+   "rule": "documentation-site.site-theme.legible-links-per-scheme",
+   "source": "docs/stylesheets/extra.css#[data-md-color-scheme=\"slate\"]",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "docs.documentation-site.site-theme.004": {
+   "file": "docs/specs/documentation-site/site-theme/docs-site-theme.feature",
+   "fingerprint": "c702704e5aae",
+   "human": false,
+   "rule": "documentation-site.site-theme.no-stand-in-logo",
+   "source": "docs/stylesheets/extra.css#.md-header__button.md-logo",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "docs.documentation-site.site-theme.005": {
+   "file": "docs/specs/documentation-site/site-theme/docs-site-theme.feature",
+   "fingerprint": "721086d36c47",
+   "human": false,
+   "rule": "documentation-site.site-theme.wide-tables-scroll",
+   "source": "docs/stylesheets/extra.css#.md-typeset table:not([class])",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  }
+ },
+ "taxonomy": {
+  "domains": [
+   {
+    "areas": [
+     {
+      "description": "Pulling daily spend from AWS Cost Explorer for the chosen window and grouping.",
+      "slug": "daily-cost",
+      "title": "Daily cost retrieval"
+     },
+     {
+      "description": "Finding explainable shifts in daily cost using simple statistics.",
+      "slug": "step-detection",
+      "title": "Step detection"
+     },
+     {
+      "description": "Collecting deploy events from git history or other supplied deploy records.",
+      "slug": "deploy-sources",
+      "title": "Deploy sources"
+     },
+     {
+      "description": "Pairing each cost step with the deploy that came before it, temporally rather than causally.",
+      "slug": "deploy-attribution",
+      "title": "Deploy attribution"
+     }
+    ],
+    "description": "Daily cost history with detected steps attributed in time to the deploys that preceded them.",
+    "slug": "cost-timeline",
+    "title": "Cost timeline"
+   },
+   {
+    "areas": [
+     {
+      "description": "Choosing the current and baseline periods, such as last month versus the month before.",
+      "slug": "period-selection",
+      "title": "Period selection"
+     },
+     {
+      "description": "Computing and ranking per-service or per-dimension changes between periods.",
+      "slug": "cost-deltas",
+      "title": "Cost deltas"
+     }
+    ],
+    "description": "The period-over-period cost report comparing one span of spend with another.",
+    "slug": "period-diff",
+    "title": "Period comparison"
+   },
+   {
+    "areas": [
+     {
+      "description": "Rendering timeline and diff results as readable text or machine-friendly formats.",
+      "slug": "report-output",
+      "title": "Report output"
+     },
+     {
+      "description": "Report language that states what the tool did and never implies causation.",
+      "slug": "report-wording",
+      "title": "Explainable wording"
+     }
+    ],
+    "description": "How results are presented to the person running the tool.",
+    "slug": "reporting",
+    "title": "Reporting"
+   },
+   {
+    "areas": [
+     {
+      "description": "The timeline and diff subcommands, their flags, defaults and exit behaviour.",
+      "slug": "commands-options",
+      "title": "Commands and options"
+     },
+     {
+      "description": "Credentials, profiles and region handling for reaching Cost Explorer.",
+      "slug": "aws-access",
+      "title": "AWS access"
+     }
+    ],
+    "description": "Invoking the tool, its options, and the AWS access it relies on.",
+    "slug": "cli-configuration",
+    "title": "Command line and configuration"
+   },
+   {
+    "areas": [
+     {
+      "description": "Getting-started, timeline and architecture pages that explain usage and design.",
+      "slug": "guides",
+      "title": "Guides"
+     },
+     {
+      "description": "The shared theme, accent palette, typography, light/dark modes and feature cards used by the docs and splash page, with no network-loaded assets.",
+      "slug": "site-theme",
+      "title": "Site look and feel"
+     }
+    ],
+    "description": "The published guides and splash page that explain the product.",
+    "slug": "documentation-site",
+    "title": "Documentation site"
+   },
+   {
+    "areas": [
+     {
+      "description": "Packaging, editable installs and the make targets that drive them.",
+      "slug": "build-install",
+      "title": "Build and install"
+     },
+     {
+      "description": "Tests, linting, pre-commit hooks and secret scanning that gate changes.",
+      "slug": "quality-checks",
+      "title": "Quality checks"
+     },
+     {
+      "description": "Conventional-commit driven versioning, changelog generation and dependency updates.",
+      "slug": "releases",
+      "title": "Releases"
+     }
+    ],
+    "description": "Building, testing, linting and releasing the project.",
+    "slug": "developer-tooling",
+    "title": "Developer tooling"
+   }
+  ]
+ }
+}
