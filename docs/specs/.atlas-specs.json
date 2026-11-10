@@ -65,23 +65,15 @@
    }
   ]
  },
- "retired": [],
+ "retired": [
+  "docs.documentation-site.site-theme.002"
+ ],
  "scenarios": {
   "docs.documentation-site.site-theme.001": {
    "file": "docs/specs/documentation-site/site-theme/docs-site-theme.feature",
    "fingerprint": "d1e8fee7d3b2",
    "human": false,
    "rule": "documentation-site.site-theme.no-network-assets",
-   "source": "docs/stylesheets/extra.css#:root",
-   "status": "inferred",
-   "test": "",
-   "tests": []
-  },
-  "docs.documentation-site.site-theme.002": {
-   "file": "docs/specs/documentation-site/site-theme/docs-site-theme.feature",
-   "fingerprint": "d1e8fee7d3b2",
-   "human": false,
-   "rule": "documentation-site.site-theme.shared-accent-palette",
    "source": "docs/stylesheets/extra.css#:root",
    "status": "inferred",
    "test": "",

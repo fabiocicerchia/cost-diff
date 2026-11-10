@@ -13,13 +13,6 @@ Feature: Presenting the documentation in one consistent, offline-safe theme
     And code is shown in the device's system monospace font
     And no font or stylesheet is downloaded from a third-party server
 
-  @id:docs.documentation-site.site-theme.002 @rule:documentation-site.site-theme.shared-accent-palette @inferred @source:docs/stylesheets/extra.css#:root
-  Scenario: The splash page and the docs use the same accent colours
-    Given the theme's accent pair is cyan #22d3ee and indigo #6366f1
-    When a reader moves from the splash page to the docs
-    Then the splash title and its buttons blend cyan into indigo
-    And the docs home title and primary buttons blend the same cyan into indigo
-
   @id:docs.documentation-site.site-theme.003 @rule:documentation-site.site-theme.legible-links-per-scheme @inferred @source:docs/stylesheets/extra.css#[data-md-color-scheme="slate"]
   Scenario Outline: Links stay legible in both light and dark mode
     Given the reader has chosen <mode> mode

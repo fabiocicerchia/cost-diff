@@ -239,7 +239,9 @@
   "cost-diff/install": [],
   "cost-diff/makefile": []
  },
- "retired": [],
+ "retired": [
+  "cli.exit-and-errors.001"
+ ],
  "scenarios": {
   "attribution.temporal-matching.001": {
    "file": "specs/attribution/temporal-matching/deploy-attribution.feature",
@@ -295,18 +297,6 @@
     "tests/test_cost_diff.py#test_timeline_markdown_names_the_deploy_the_lag_and_the_confidence",
     "tests/test_cost_diff.py#test_timeline_json_carries_the_numbers_and_the_caveat",
     "tests/test_cost_diff.py#test_pr_comment_body_quotes_the_step_and_the_caveat"
-   ]
-  },
-  "cli.exit-and-errors.001": {
-   "file": "specs/cli/exit-and-errors/exit-and-errors.feature",
-   "fingerprint": "83b963d8fc9a",
-   "human": false,
-   "rule": "cli.errors.fixable-problems-one-line-exit-1",
-   "source": "cost_diff.py#main",
-   "status": "verified",
-   "test": "tests/test_cost_diff.py#test_bad_timeline_flags_are_reported_not_raised",
-   "tests": [
-    "tests/test_cost_diff.py#test_bad_timeline_flags_are_reported_not_raised"
    ]
   },
   "cli.exit-and-errors.002": {

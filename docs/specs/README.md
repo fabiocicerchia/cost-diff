@@ -6,4 +6,4 @@ Tags: `@verified` a test asserts it · `@inferred` read from the code only · `@
 ## Documentation site
 The published guides and splash page that explain the product.
 
-- **Site look and feel**: [Presenting the documentation in one consistent, offline-safe theme](documentation-site/site-theme/docs-site-theme.feature) (5)
+- **Site look and feel**: [Presenting the documentation in one consistent, offline-safe theme](documentation-site/site-theme/docs-site-theme.feature) (4)

@@ -11,7 +11,7 @@ Matching each cost step to the deploy that came just before it, by time only and
 ## Command line
 How users call the tool and how it starts up.
 
-- **Exit codes and errors**: [Reporting failures to the operator](cli/exit-and-errors/exit-and-errors.feature) (2)
+- **Exit codes and errors**: [Reporting failures to the operator](cli/exit-and-errors/exit-and-errors.feature) (1)
 - **Subcommands and flags**: [Running cost-diff from the command line](cli/subcommands/cli-commands.feature) (3)
 
 ## Cost data
