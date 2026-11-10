@@ -1,0 +1,1258 @@
+{
+ "excluded": {
+  "cost-diff/cost-diff": [
+   {
+    "candidate": "Cost Explorer pagination is followed and amounts summed across pages",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "cost_diff.py#fetch_costs"
+   },
+   {
+    "candidate": "Monthly query uses exclusive end date (month_bounds)",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "cost_diff.py#month_bounds"
+   },
+   {
+    "candidate": "Cost Explorer client always created in us-east-1",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "cost_diff.py#_ce_client"
+   },
+   {
+    "candidate": "Daily query requests DAILY granularity",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "cost_diff.py#fetch_daily_costs"
+   },
+   {
+    "candidate": "PELT returns the optimal segmentation under minimum segment length",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "cost_diff.py#_pelt"
+   },
+   {
+    "candidate": "Noise estimate floored at 2% of level on quantised series",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "cost_diff.py#_noise_sigma"
+   },
+   {
+    "candidate": "Strongest candidate kept per window neighbourhood",
+    "covered_by": "cost-steps.onset.one-step-on-the-day-the-new-level-holds",
+    "reason": "DUPLICATE_OF",
+    "source": "cost_diff.py#_keep_strongest"
+   },
+   {
+    "candidate": "Cache key derived from SHA-256 of the query; atomic pending-file write",
+    "covered_by": "",
+    "reason": "TECH_PERSISTENCE",
+    "source": "cost_diff.py#ResponseCache"
+   },
+   {
+    "candidate": "Subprocesses run with fixed argv, no shell, path from shutil.which",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "cost_diff.py#_run"
+   },
+   {
+    "candidate": "Injectable CostExplorer protocol for tests",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "cost_diff.py#CostExplorer"
+   },
+   {
+    "candidate": "Ramp-fraction and transition-days tuning flags individually",
+    "covered_by": "cost-steps.detection.ramps-are-not-steps",
+    "reason": "DUPLICATE_OF",
+    "source": "cost_diff.py#_add_detection_flags"
+   },
+   {
+    "candidate": "Window/threshold/min-step/pelt-penalty flags as separate scenarios",
+    "covered_by": "cost-steps.detection.minimum-size-and-significance",
+    "reason": "DUPLICATE_OF",
+    "source": "cost_diff.py#_detection_config"
+   },
+   {
+    "candidate": "Mermaid y-axis top at 110% of max",
+    "covered_by": "",
+    "reason": "TRIVIAL",
+    "source": "cost_diff.py#render_mermaid_chart"
+   },
+   {
+    "candidate": "ASCII legend capped at 12 deploys",
+    "covered_by": "timeline.charts.deploy-days-marked",
+    "reason": "DUPLICATE_OF",
+    "source": "cost_diff.py#render_ascii_chart"
+   },
+   {
+    "candidate": "Step pct '(from nothing)' when no prior spend",
+    "covered_by": "timeline.text.step-entry-shows-levels-and-deploys",
+    "reason": "DUPLICATE_OF",
+    "source": "cost_diff.py#_level_line"
+   },
+   {
+    "candidate": "Deploy file label falls back to the timestamp",
+    "covered_by": "deploys.file.accepted-layouts",
+    "reason": "DUPLICATE_OF",
+    "source": "cost_diff.py#_deploy_from_row"
+   },
+   {
+    "candidate": "Argo CD history wrapped under 'items'",
+    "covered_by": "deploys.argocd.sync-history",
+    "reason": "DUPLICATE_OF",
+    "source": "cost_diff.py#deploys_from_argocd"
+   },
+   {
+    "candidate": "Makefile, pre-commit, CI, Docker image, installer",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "cost_diff.py"
+   }
+  ],
+  "cost-diff/dockerfile": [
+   {
+    "candidate": "Multi-stage build: wheel built in a build stage and copied into a slim runtime stage",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Dockerfile#build"
+   },
+   {
+    "candidate": "Base image pinned to python:3.14-slim by sha256 digest",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Dockerfile#FROM"
+   },
+   {
+    "candidate": "Installer wheel and runtime lockfile removed from /tmp after install",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Dockerfile#RUN"
+   },
+   {
+    "candidate": "HEALTHCHECK only confirms the Python interpreter starts",
+    "covered_by": "",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "Dockerfile#HEALTHCHECK"
+   },
+   {
+    "candidate": "Recommendation to run with --read-only root filesystem",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "Dockerfile#USER"
+   }
+  ],
+  "cost-diff/install": [
+   {
+    "candidate": "No check of the Python version (3.10+) before installing; that is left to pip or pipx",
+    "covered_by": "",
+    "reason": "UNVERIFIABLE",
+    "source": "install.sh"
+   },
+   {
+    "candidate": "Bash strict mode (nounset, pipefail) as a script setting",
+    "covered_by": "operations.installer.failure-aborts-without-success-message",
+    "reason": "INTERNAL_MECHANISM",
+    "source": "install.sh"
+   }
+  ],
+  "cost-diff/makefile": [
+   {
+    "candidate": "make help lists every target with its one-line description",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "Makefile#help"
+   },
+   {
+    "candidate": "make setup installs the pre-commit hook",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "Makefile#setup"
+   },
+   {
+    "candidate": "make install installs the package with pip",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#install"
+   },
+   {
+    "candidate": "make dev does an editable install with the dev extras",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "Makefile#dev"
+   },
+   {
+    "candidate": "make lint runs every pre-commit hook over all files (CLAUDE.md still says it runs ruff check)",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#lint"
+   },
+   {
+    "candidate": "make test runs pytest quietly",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "Makefile#test"
+   },
+   {
+    "candidate": "make build builds the sdist and wheel",
+    "covered_by": "",
+    "reason": "TECH_BUILD",
+    "source": "Makefile#build"
+   },
+   {
+    "candidate": "make run prints the cost-diff help text",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "Makefile#run"
+   },
+   {
+    "candidate": "make format rewrites the sources with ruff format",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "Makefile#format"
+   },
+   {
+    "candidate": "make analyze type-checks with basedpyright",
+    "covered_by": "",
+    "reason": "TECH_DEVTOOLING",
+    "source": "Makefile#analyze"
+   }
+  ]
+ },
+ "lifted": {
+  "cost-diff/cost-diff": [
+   {
+    "from_source": "cost_diff.py#ResponseCache",
+    "rule": "cost-data.cache.expires-after-ttl"
+   },
+   {
+    "from_source": "cost_diff.py#ResponseCache",
+    "rule": "cost-data.cache.damaged-entry-never-fails-run"
+   }
+  ],
+  "cost-diff/dockerfile": [
+   {
+    "from_source": "Dockerfile#build",
+    "rule": "operations.container-image.only-hash-verified-dependencies"
+   }
+  ],
+  "cost-diff/install": [],
+  "cost-diff/makefile": []
+ },
+ "retired": [
+  "cli.exit-and-errors.001"
+ ],
+ "scenarios": {
+  "attribution.temporal-matching.001": {
+   "file": "specs/attribution/temporal-matching/deploy-attribution.feature",
+   "fingerprint": "c7d042f13d8e",
+   "human": false,
+   "rule": "attribution.matching.window-before-and-during-step-day",
+   "source": "cost_diff.py#attribute",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_one_deploy_in_window_is_attributed_with_high_confidence",
+   "tests": [
+    "tests/test_cost_diff.py#test_one_deploy_in_window_is_attributed_with_high_confidence",
+    "tests/test_cost_diff.py#test_deploy_during_the_step_day_is_in_window_with_a_negative_lag",
+    "tests/test_cost_diff.py#test_deploy_outside_the_window_is_not_attributed",
+    "tests/test_cost_diff.py#test_timeline_markdown_names_the_deploy_the_lag_and_the_confidence"
+   ]
+  },
+  "attribution.temporal-matching.002": {
+   "file": "specs/attribution/temporal-matching/deploy-attribution.feature",
+   "fingerprint": "c7d042f13d8e",
+   "human": false,
+   "rule": "attribution.matching.window-is-configurable",
+   "source": "cost_diff.py#attribute",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_window_is_configurable",
+   "tests": [
+    "tests/test_cost_diff.py#test_window_is_configurable"
+   ]
+  },
+  "attribution.temporal-matching.003": {
+   "file": "specs/attribution/temporal-matching/deploy-attribution.feature",
+   "fingerprint": "57409f56f4a4",
+   "human": false,
+   "rule": "attribution.confidence.by-deploys-in-window",
+   "source": "cost_diff.py#Attribution",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_two_deploys_in_window_are_listed_rather_than_guessed",
+   "tests": [
+    "tests/test_cost_diff.py#test_two_deploys_in_window_are_listed_rather_than_guessed",
+    "tests/test_cost_diff.py#test_three_deploys_in_window_drop_to_low_confidence",
+    "tests/test_cost_diff.py#test_timeline_markdown_lists_both_deploys_when_two_are_in_window",
+    "tests/test_cost_diff.py#test_timeline_without_deploys_reports_the_step_unattributed"
+   ]
+  },
+  "attribution.temporal-matching.004": {
+   "file": "specs/attribution/temporal-matching/deploy-attribution.feature",
+   "fingerprint": "64dc32789433",
+   "human": false,
+   "rule": "attribution.confidence.temporal-not-causal-disclaimer",
+   "source": "cost_diff.py#_source_summary",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_timeline_markdown_names_the_deploy_the_lag_and_the_confidence",
+   "tests": [
+    "tests/test_cost_diff.py#test_timeline_markdown_names_the_deploy_the_lag_and_the_confidence",
+    "tests/test_cost_diff.py#test_timeline_json_carries_the_numbers_and_the_caveat",
+    "tests/test_cost_diff.py#test_pr_comment_body_quotes_the_step_and_the_caveat"
+   ]
+  },
+  "cli.exit-and-errors.002": {
+   "file": "specs/cli/exit-and-errors/exit-and-errors.feature",
+   "fingerprint": "83b963d8fc9a",
+   "human": false,
+   "rule": "cli.errors.aws-and-period-failures-untranslated",
+   "source": "cost_diff.py#main",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "cli.subcommands.001": {
+   "file": "specs/cli/subcommands/cli-commands.feature",
+   "fingerprint": "8b7ad37b0aab",
+   "human": false,
+   "rule": "cli.legacy.leading-flag-means-diff",
+   "source": "cost_diff.py#normalise_argv",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_bare_flags_still_mean_the_diff_subcommand",
+   "tests": [
+    "tests/test_cost_diff.py#test_bare_flags_still_mean_the_diff_subcommand"
+   ]
+  },
+  "cli.subcommands.002": {
+   "file": "specs/cli/subcommands/cli-commands.feature",
+   "fingerprint": "43d2b985f4dd",
+   "human": false,
+   "rule": "cli.timeline.documented-defaults",
+   "source": "cost_diff.py#_add_timeline_parser",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_timeline_defaults_are_the_documented_ones",
+   "tests": [
+    "tests/test_cost_diff.py#test_timeline_defaults_are_the_documented_ones"
+   ]
+  },
+  "cli.subcommands.003": {
+   "file": "specs/cli/subcommands/cli-commands.feature",
+   "fingerprint": "6508c04345bc",
+   "human": false,
+   "rule": "cli.arguments.usage-errors-refused",
+   "source": "cost_diff.py#_build_parser",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "cost-data.response-cache.001": {
+   "file": "specs/cost-data/response-cache/response-cache.feature",
+   "fingerprint": "ff0f55832fb0",
+   "human": false,
+   "rule": "cost-data.cache.reuse-within-lifetime",
+   "source": "cost_diff.py#fetch_daily_costs",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_response_cache_saves_a_second_call",
+   "tests": [
+    "tests/test_cost_diff.py#test_response_cache_saves_a_second_call"
+   ]
+  },
+  "cost-data.response-cache.002": {
+   "file": "specs/cost-data/response-cache/response-cache.feature",
+   "fingerprint": "e11dfb316311",
+   "human": false,
+   "rule": "cost-data.cache.expires-after-ttl",
+   "source": "cost_diff.py#ResponseCache",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_expired_cache_entry_is_a_miss",
+   "tests": [
+    "tests/test_cost_diff.py#test_expired_cache_entry_is_a_miss"
+   ]
+  },
+  "cost-data.response-cache.003": {
+   "file": "specs/cost-data/response-cache/response-cache.feature",
+   "fingerprint": "e11dfb316311",
+   "human": false,
+   "rule": "cost-data.cache.damaged-entry-never-fails-run",
+   "source": "cost_diff.py#ResponseCache",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_a_corrupt_cache_entry_is_a_miss",
+   "tests": [
+    "tests/test_cost_diff.py#test_a_corrupt_cache_entry_is_a_miss"
+   ]
+  },
+  "cost-data.response-cache.004": {
+   "file": "specs/cost-data/response-cache/response-cache.feature",
+   "fingerprint": "453572c96339",
+   "human": false,
+   "rule": "cost-data.cache.opt-in-timeline-only",
+   "source": "cost_diff.py#build_timeline_report",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "cost-steps.step-detection.001": {
+   "file": "specs/cost-steps/step-detection/step-detection.feature",
+   "fingerprint": "ac92828b8b61",
+   "human": false,
+   "rule": "cost-steps.detection.finds-level-shift-on-its-day",
+   "source": "cost_diff.py#detect_steps",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_clean_step_is_found_on_the_day_cost_moved",
+   "tests": [
+    "tests/test_cost_diff.py#test_clean_step_is_found_on_the_day_cost_moved",
+    "tests/test_cost_diff.py#test_step_down_is_found_too"
+   ]
+  },
+  "cost-steps.step-detection.002": {
+   "file": "specs/cost-steps/step-detection/step-detection.feature",
+   "fingerprint": "ac92828b8b61",
+   "human": false,
+   "rule": "cost-steps.detection.ignores-noise-and-spikes",
+   "source": "cost_diff.py#detect_steps",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_flat_series_has_no_step",
+   "tests": [
+    "tests/test_cost_diff.py#test_flat_series_has_no_step",
+    "tests/test_cost_diff.py#test_one_day_spike_is_not_a_step"
+   ]
+  },
+  "cost-steps.step-detection.003": {
+   "file": "specs/cost-steps/step-detection/step-detection.feature",
+   "fingerprint": "20eb2e9d9d4e",
+   "human": false,
+   "rule": "cost-steps.detection.ramps-are-not-steps",
+   "source": "cost_diff.py#_is_step_not_ramp",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_gradual_ramp_is_not_reported_as_a_step",
+   "tests": [
+    "tests/test_cost_diff.py#test_gradual_ramp_is_not_reported_as_a_step",
+    "tests/test_cost_diff.py#test_steep_ramp_is_still_not_a_step"
+   ]
+  },
+  "cost-steps.step-detection.004": {
+   "file": "specs/cost-steps/step-detection/step-detection.feature",
+   "fingerprint": "0876d6d60aea",
+   "human": false,
+   "rule": "cost-steps.detection.minimum-size-and-significance",
+   "source": "cost_diff.py#_pelt_steps",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_small_steps_are_below_the_dollar_floor",
+   "tests": [
+    "tests/test_cost_diff.py#test_small_steps_are_below_the_dollar_floor",
+    "tests/test_cost_diff.py#test_threshold_sigma_applies_to_pelt_too"
+   ]
+  },
+  "cost-steps.step-detection.005": {
+   "file": "specs/cost-steps/step-detection/step-detection.feature",
+   "fingerprint": "f2464d1a5f6e",
+   "human": false,
+   "rule": "cost-steps.onset.one-step-on-the-day-the-new-level-holds",
+   "source": "cost_diff.py#_refine_onset",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_mid_day_deploy_taking_two_days_to_bill_is_one_step",
+   "tests": [
+    "tests/test_cost_diff.py#test_mid_day_deploy_taking_two_days_to_bill_is_one_step",
+    "tests/test_cost_diff.py#test_one_odd_day_does_not_move_the_step_onto_itself"
+   ]
+  },
+  "cost-steps.step-detection.006": {
+   "file": "specs/cost-steps/step-detection/step-detection.feature",
+   "fingerprint": "453572c96339",
+   "human": false,
+   "rule": "cost-steps.detection.per-group-not-total",
+   "source": "cost_diff.py#build_timeline_report",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_timeline_end_to_end_picks_the_deploy_out_of_the_series",
+   "tests": [
+    "tests/test_cost_diff.py#test_timeline_end_to_end_picks_the_deploy_out_of_the_series"
+   ]
+  },
+  "cost-steps.step-detection.007": {
+   "file": "specs/cost-steps/step-detection/step-detection.feature",
+   "fingerprint": "ac92828b8b61",
+   "human": false,
+   "rule": "cost-steps.detection.needs-a-window-either-side",
+   "source": "cost_diff.py#detect_steps",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_detection_needs_a_window_either_side",
+   "tests": [
+    "tests/test_cost_diff.py#test_detection_needs_a_window_either_side"
+   ]
+  },
+  "deploys.file-deploys.001": {
+   "file": "specs/deploys/file-deploys/deploy-files.feature",
+   "fingerprint": "7f9201435c46",
+   "human": false,
+   "rule": "deploys.file.accepted-layouts",
+   "source": "cost_diff.py#deploys_from_file",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_deploys_from_csv_with_a_header",
+   "tests": [
+    "tests/test_cost_diff.py#test_deploys_from_csv_with_a_header",
+    "tests/test_cost_diff.py#test_csv_header_is_read_case_insensitively",
+    "tests/test_cost_diff.py#test_deploys_from_csv_without_a_header",
+    "tests/test_cost_diff.py#test_deploys_from_json_objects",
+    "tests/test_cost_diff.py#test_deploys_from_json_pairs"
+   ]
+  },
+  "deploys.file-deploys.002": {
+   "file": "specs/deploys/file-deploys/deploy-files.feature",
+   "fingerprint": "18e58e20846a",
+   "human": false,
+   "rule": "deploys.file.timestamps-normalised-to-utc",
+   "source": "cost_diff.py#_parse_time",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_deploys_from_csv_with_a_header",
+   "tests": [
+    "tests/test_cost_diff.py#test_deploys_from_csv_with_a_header",
+    "tests/test_cost_diff.py#test_naive_deploy_timestamps_are_read_as_utc",
+    "tests/test_cost_diff.py#test_an_offset_timestamp_is_converted_not_dropped",
+    "tests/test_cost_diff.py#test_epoch_timestamps_in_seconds_and_milliseconds"
+   ]
+  },
+  "deploys.file-deploys.003": {
+   "file": "specs/deploys/file-deploys/deploy-files.feature",
+   "fingerprint": "7f9201435c46",
+   "human": false,
+   "rule": "deploys.file.unreadable-input-refused",
+   "source": "cost_diff.py#deploys_from_file",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_unreadable_timestamp_says_what_it_wanted",
+   "tests": [
+    "tests/test_cost_diff.py#test_unreadable_timestamp_says_what_it_wanted",
+    "tests/test_cost_diff.py#test_a_number_that_is_not_an_epoch_gets_the_iso_message",
+    "tests/test_cost_diff.py#test_a_row_without_a_timestamp_names_the_file",
+    "tests/test_cost_diff.py#test_a_misnamed_json_wrapper_key_is_an_error_not_an_empty_timeline"
+   ]
+  },
+  "deploys.file-deploys.004": {
+   "file": "specs/deploys/file-deploys/deploy-files.feature",
+   "fingerprint": "10a56d96c3e8",
+   "human": false,
+   "rule": "deploys.filter.label-glob",
+   "source": "cost_diff.py#load_deploys",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "deploys.git-deploys.001": {
+   "file": "specs/deploys/git-deploys/git-deploys.feature",
+   "fingerprint": "734816697551",
+   "human": false,
+   "rule": "deploys.git.tags-as-deploys",
+   "source": "cost_diff.py#deploys_from_git",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_annotated_tag_reports_the_commit_not_the_tag_object",
+   "tests": [
+    "tests/test_cost_diff.py#test_annotated_tag_reports_the_commit_not_the_tag_object"
+   ]
+  },
+  "deploys.git-deploys.002": {
+   "file": "specs/deploys/git-deploys/git-deploys.feature",
+   "fingerprint": "423af7c4c36d",
+   "human": false,
+   "rule": "deploys.external-tools.failures-reported",
+   "source": "cost_diff.py#_run",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "deploys.github-deploys.001": {
+   "file": "specs/deploys/github-deploys/github-argocd-deploys.feature",
+   "fingerprint": "8f6646a96a6e",
+   "human": false,
+   "rule": "deploys.github.environment-ref-labels",
+   "source": "cost_diff.py#deploys_from_github",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "deploys.github-deploys.002": {
+   "file": "specs/deploys/github-deploys/github-argocd-deploys.feature",
+   "fingerprint": "8f6646a96a6e",
+   "human": false,
+   "rule": "deploys.github.most-recent-100-only",
+   "source": "cost_diff.py#deploys_from_github",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "deploys.github-deploys.003": {
+   "file": "specs/deploys/github-deploys/github-argocd-deploys.feature",
+   "fingerprint": "7e634a2fa4d0",
+   "human": false,
+   "rule": "deploys.argocd.sync-history",
+   "source": "cost_diff.py#deploys_from_argocd",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "operations.container-image.001": {
+   "file": "specs/operations/container-image/container-image.feature",
+   "fingerprint": "d8eb6440e90d",
+   "human": false,
+   "rule": "operations.container-image.runs-cost-diff-command",
+   "source": "Dockerfile#ENTRYPOINT",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "operations.container-image.002": {
+   "file": "specs/operations/container-image/container-image.feature",
+   "fingerprint": "b0e998760f14",
+   "human": false,
+   "rule": "operations.container-image.runs-as-non-root",
+   "source": "Dockerfile#USER",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "operations.container-image.003": {
+   "file": "specs/operations/container-image/container-image.feature",
+   "fingerprint": "e3a12f7dd725",
+   "human": false,
+   "rule": "operations.container-image.only-hash-verified-dependencies",
+   "source": "Dockerfile#build",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "operations.installer.001": {
+   "file": "specs/operations/installer/one-line-installer.feature",
+   "fingerprint": "7f046d82db4a",
+   "human": false,
+   "rule": "operations.installer.prefers-pipx-falls-back-to-pip-user",
+   "source": "install.sh",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "operations.installer.002": {
+   "file": "specs/operations/installer/one-line-installer.feature",
+   "fingerprint": "7f046d82db4a",
+   "human": false,
+   "rule": "operations.installer.failure-aborts-without-success-message",
+   "source": "install.sh",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "period-diff.change-ranking.001": {
+   "file": "specs/period-diff/change-ranking/month-over-month-diff.feature",
+   "fingerprint": "01b085bb38d2",
+   "human": false,
+   "rule": "period-diff.periods.baseline-defaults-to-previous-month",
+   "source": "cost_diff.py#_run_diff",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_month_arithmetic",
+   "tests": [
+    "tests/test_cost_diff.py#test_month_arithmetic"
+   ]
+  },
+  "period-diff.change-ranking.002": {
+   "file": "specs/period-diff/change-ranking/month-over-month-diff.feature",
+   "fingerprint": "897798ac2e47",
+   "human": false,
+   "rule": "period-diff.ranking.largest-absolute-change-first",
+   "source": "cost_diff.py#build_diff",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_diff_sorted_by_magnitude_and_thresholded",
+   "tests": [
+    "tests/test_cost_diff.py#test_diff_sorted_by_magnitude_and_thresholded"
+   ]
+  },
+  "period-diff.change-ranking.003": {
+   "file": "specs/period-diff/change-ranking/month-over-month-diff.feature",
+   "fingerprint": "897798ac2e47",
+   "human": false,
+   "rule": "period-diff.weekdays.flag-unexplained-swings",
+   "source": "cost_diff.py#build_diff",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_anomaly_flags_unexplained_swings_same_weekday_count",
+   "tests": [
+    "tests/test_cost_diff.py#test_anomaly_flags_unexplained_swings_same_weekday_count",
+    "tests/test_cost_diff.py#test_weekday_count"
+   ]
+  },
+  "period-diff.change-ranking.004": {
+   "file": "specs/period-diff/change-ranking/month-over-month-diff.feature",
+   "fingerprint": "9bc20ce4f714",
+   "human": false,
+   "rule": "period-diff.usage-breakdown.top-service-by-usage-type",
+   "source": "cost_diff.py#_usage_type_breakdown",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_render_why_lists_usage_types",
+   "tests": [
+    "tests/test_cost_diff.py#test_render_why_lists_usage_types"
+   ]
+  },
+  "period-diff.change-ranking.005": {
+   "file": "specs/period-diff/change-ranking/month-over-month-diff.feature",
+   "fingerprint": "77298d2cffb4",
+   "human": false,
+   "rule": "cost-data.metrics.chosen-metric-is-reported",
+   "source": "cost_diff.py#fetch_costs",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_fetch_costs_uses_selected_metric",
+   "tests": [
+    "tests/test_cost_diff.py#test_fetch_costs_uses_selected_metric"
+   ]
+  },
+  "period-diff.diff-report.001": {
+   "file": "specs/period-diff/diff-report/diff-report.feature",
+   "fingerprint": "1aefca04b3d2",
+   "human": false,
+   "rule": "period-diff.report.total-with-trend-arrow",
+   "source": "cost_diff.py#render",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_render_contains_totals_and_table",
+   "tests": [
+    "tests/test_cost_diff.py#test_render_contains_totals_and_table",
+    "tests/test_cost_diff.py#test_render_zero_net_change_uses_neutral_arrow"
+   ]
+  },
+  "period-diff.diff-report.002": {
+   "file": "specs/period-diff/diff-report/diff-report.feature",
+   "fingerprint": "b7acef3c40d3",
+   "human": false,
+   "rule": "period-diff.report.total-excludes-sub-threshold-services",
+   "source": "cost_diff.py#_totals",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "period-diff.diff-report.003": {
+   "file": "specs/period-diff/diff-report/diff-report.feature",
+   "fingerprint": "1aefca04b3d2",
+   "human": false,
+   "rule": "period-diff.report.top-n-with-hidden-count",
+   "source": "cost_diff.py#render",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_render_hidden_rows_message_blames_top_not_threshold",
+   "tests": [
+    "tests/test_cost_diff.py#test_render_hidden_rows_message_blames_top_not_threshold"
+   ]
+  },
+  "period-diff.diff-report.004": {
+   "file": "specs/period-diff/diff-report/diff-report.feature",
+   "fingerprint": "ab17aecbafe6",
+   "human": false,
+   "rule": "period-diff.report.signed-whole-dollar-changes",
+   "source": "cost_diff.py#_change_row",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_render_contains_totals_and_table",
+   "tests": [
+    "tests/test_cost_diff.py#test_render_contains_totals_and_table"
+   ]
+  },
+  "sharing.pr-comments.001": {
+   "file": "specs/sharing/pr-comments/pr-comments.feature",
+   "fingerprint": "571e81c50cd7",
+   "human": false,
+   "rule": "sharing.pr-comments.single-deploy-with-pr-only",
+   "source": "cost_diff.py#comment_on_pull_requests",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_pr_comment_skips_a_step_with_no_single_deploy_to_blame",
+   "tests": [
+    "tests/test_cost_diff.py#test_pr_comment_skips_a_step_with_no_single_deploy_to_blame",
+    "tests/test_cost_diff.py#test_pr_comment_skips_a_deploy_with_no_revision"
+   ]
+  },
+  "sharing.pr-comments.002": {
+   "file": "specs/sharing/pr-comments/pr-comments.feature",
+   "fingerprint": "f260026f01e8",
+   "human": false,
+   "rule": "sharing.pr-comments.body-quotes-step-and-caveat",
+   "source": "cost_diff.py#render_pr_comment",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_pr_comment_body_quotes_the_step_and_the_caveat",
+   "tests": [
+    "tests/test_cost_diff.py#test_pr_comment_body_quotes_the_step_and_the_caveat"
+   ]
+  },
+  "sharing.pr-comments.003": {
+   "file": "specs/sharing/pr-comments/pr-comments.feature",
+   "fingerprint": "571e81c50cd7",
+   "human": false,
+   "rule": "sharing.pr-comments.dry-run-posts-nothing",
+   "source": "cost_diff.py#comment_on_pull_requests",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_one_unreachable_pull_request_does_not_drop_the_other_steps",
+   "tests": [
+    "tests/test_cost_diff.py#test_one_unreachable_pull_request_does_not_drop_the_other_steps"
+   ]
+  },
+  "sharing.pr-comments.004": {
+   "file": "specs/sharing/pr-comments/pr-comments.feature",
+   "fingerprint": "571e81c50cd7",
+   "human": false,
+   "rule": "sharing.pr-comments.one-failure-does-not-stop-others",
+   "source": "cost_diff.py#comment_on_pull_requests",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_one_unreachable_pull_request_does_not_drop_the_other_steps",
+   "tests": [
+    "tests/test_cost_diff.py#test_one_unreachable_pull_request_does_not_drop_the_other_steps"
+   ]
+  },
+  "sharing.pr-comments.005": {
+   "file": "specs/sharing/pr-comments/pr-comments.feature",
+   "fingerprint": "a13b9262f96d",
+   "human": false,
+   "rule": "sharing.pr-comments.repository-inferred-or-required",
+   "source": "cost_diff.py#_infer_repo",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "sharing.slack.001": {
+   "file": "specs/sharing/slack/slack-posts.feature",
+   "fingerprint": "632d083ad4e2",
+   "human": false,
+   "rule": "sharing.slack.posts-header-total-and-movers",
+   "source": "cost_diff.py#render_slack_blocks",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_render_slack_blocks_uses_mrkdwn_not_gfm",
+   "tests": [
+    "tests/test_cost_diff.py#test_render_slack_blocks_uses_mrkdwn_not_gfm"
+   ]
+  },
+  "sharing.slack.002": {
+   "file": "specs/sharing/slack/slack-posts.feature",
+   "fingerprint": "391fb862fa70",
+   "human": false,
+   "rule": "sharing.slack.https-webhooks-only",
+   "source": "cost_diff.py#post_slack",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "sharing.slack.003": {
+   "file": "specs/sharing/slack/slack-posts.feature",
+   "fingerprint": "391fb862fa70",
+   "human": false,
+   "rule": "sharing.slack.delivery-failure-not-translated",
+   "source": "cost_diff.py#post_slack",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "timeline-reporting.cost-charts.001": {
+   "file": "specs/timeline-reporting/cost-charts/cost-charts.feature",
+   "fingerprint": "d7f6fe1bee34",
+   "human": false,
+   "rule": "timeline.charts.deploy-days-marked",
+   "source": "cost_diff.py#render_chart",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_ascii_chart_marks_deploy_days",
+   "tests": [
+    "tests/test_cost_diff.py#test_ascii_chart_marks_deploy_days",
+    "tests/test_cost_diff.py#test_mermaid_chart_is_a_xychart_with_the_deploy_day_marked"
+   ]
+  },
+  "timeline-reporting.cost-charts.002": {
+   "file": "specs/timeline-reporting/cost-charts/cost-charts.feature",
+   "fingerprint": "a080c7070628",
+   "human": false,
+   "rule": "timeline.charts.series-and-height-selectable",
+   "source": "cost_diff.py#render_timeline",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_timeline_defaults_are_the_documented_ones",
+   "tests": [
+    "tests/test_cost_diff.py#test_timeline_defaults_are_the_documented_ones"
+   ]
+  },
+  "timeline-reporting.cost-charts.003": {
+   "file": "specs/timeline-reporting/cost-charts/cost-charts.feature",
+   "fingerprint": "945c1153d7af",
+   "human": false,
+   "rule": "timeline.charts.unknown-series-refused",
+   "source": "cost_diff.py#TimelineReport",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_chart_group_that_does_not_exist_says_which_ones_do",
+   "tests": [
+    "tests/test_cost_diff.py#test_chart_group_that_does_not_exist_says_which_ones_do"
+   ]
+  },
+  "timeline-reporting.cost-charts.004": {
+   "file": "specs/timeline-reporting/cost-charts/cost-charts.feature",
+   "fingerprint": "9f8164e67b2f",
+   "human": false,
+   "rule": "timeline.charts.degenerate-series-render",
+   "source": "cost_diff.py#render_ascii_chart",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_ascii_chart_survives_a_flat_and_short_series",
+   "tests": [
+    "tests/test_cost_diff.py#test_ascii_chart_survives_a_flat_and_short_series",
+    "tests/test_cost_diff.py#test_chart_of_an_empty_range_says_so_instead_of_raising"
+   ]
+  },
+  "timeline-reporting.json-output.001": {
+   "file": "specs/timeline-reporting/json-output/timeline-json.feature",
+   "fingerprint": "ad2366935349",
+   "human": false,
+   "rule": "timeline.json.steps-with-confidence-and-lag",
+   "source": "cost_diff.py#timeline_json",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_timeline_json_carries_the_numbers_and_the_caveat",
+   "tests": [
+    "tests/test_cost_diff.py#test_timeline_json_carries_the_numbers_and_the_caveat"
+   ]
+  },
+  "timeline-reporting.json-output.002": {
+   "file": "specs/timeline-reporting/json-output/timeline-json.feature",
+   "fingerprint": "ad2366935349",
+   "human": false,
+   "rule": "timeline.json.detection-settings-recorded",
+   "source": "cost_diff.py#timeline_json",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_timeline_json_carries_the_numbers_and_the_caveat",
+   "tests": [
+    "tests/test_cost_diff.py#test_timeline_json_carries_the_numbers_and_the_caveat"
+   ]
+  },
+  "timeline-reporting.json-output.003": {
+   "file": "specs/timeline-reporting/json-output/timeline-json.feature",
+   "fingerprint": "ad2366935349",
+   "human": false,
+   "rule": "timeline.json.series-total-and-stepped-groups",
+   "source": "cost_diff.py#timeline_json",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_timeline_json_carries_the_numbers_and_the_caveat",
+   "tests": [
+    "tests/test_cost_diff.py#test_timeline_json_carries_the_numbers_and_the_caveat"
+   ]
+  },
+  "timeline-reporting.timeline-range.001": {
+   "file": "specs/timeline-reporting/timeline-range/timeline-range.feature",
+   "fingerprint": "d1a5cf13a559",
+   "human": false,
+   "rule": "timeline.range.days-ending-yesterday-or-given-end",
+   "source": "cost_diff.py#_timeline_range",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_timeline_defaults_are_the_documented_ones",
+   "tests": [
+    "tests/test_cost_diff.py#test_timeline_defaults_are_the_documented_ones",
+    "tests/test_cost_diff.py#test_timeline_json_carries_the_numbers_and_the_caveat"
+   ]
+  },
+  "timeline-reporting.timeline-range.002": {
+   "file": "specs/timeline-reporting/timeline-range/timeline-range.feature",
+   "fingerprint": "1f92cd610e14",
+   "human": false,
+   "rule": "timeline.range.invalid-settings-refused-before-querying",
+   "source": "cost_diff.py#_validate_timeline_args",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_bad_timeline_flags_are_reported_not_raised",
+   "tests": [
+    "tests/test_cost_diff.py#test_bad_timeline_flags_are_reported_not_raised"
+   ]
+  },
+  "timeline-reporting.timeline-range.003": {
+   "file": "specs/timeline-reporting/timeline-range/timeline-range.feature",
+   "fingerprint": "453572c96339",
+   "human": false,
+   "rule": "timeline.range.deploys-checked-before-paid-query",
+   "source": "cost_diff.py#build_timeline_report",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "timeline-reporting.timeline-range.004": {
+   "file": "specs/timeline-reporting/timeline-range/timeline-range.feature",
+   "fingerprint": "ff0f55832fb0",
+   "human": false,
+   "rule": "timeline.grouping.service-and-tag-labels",
+   "source": "cost_diff.py#fetch_daily_costs",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_fetch_daily_costs_groups_by_service_and_tag",
+   "tests": [
+    "tests/test_cost_diff.py#test_fetch_daily_costs_groups_by_service_and_tag"
+   ]
+  },
+  "timeline-reporting.timeline-range.005": {
+   "file": "specs/timeline-reporting/timeline-range/timeline-range.feature",
+   "fingerprint": "04cf09918918",
+   "human": false,
+   "rule": "timeline.series.missing-days-are-zero",
+   "source": "cost_diff.py#densify",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_densify_fills_missing_days_with_zero_and_totals",
+   "tests": [
+    "tests/test_cost_diff.py#test_densify_fills_missing_days_with_zero_and_totals"
+   ]
+  },
+  "timeline-reporting.timeline-text.001": {
+   "file": "specs/timeline-reporting/timeline-text/timeline-narrative.feature",
+   "fingerprint": "a080c7070628",
+   "human": false,
+   "rule": "timeline.text.header-states-method-and-sources",
+   "source": "cost_diff.py#render_timeline",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_timeline_markdown_names_the_deploy_the_lag_and_the_confidence",
+   "tests": [
+    "tests/test_cost_diff.py#test_timeline_markdown_names_the_deploy_the_lag_and_the_confidence"
+   ]
+  },
+  "timeline-reporting.timeline-text.002": {
+   "file": "specs/timeline-reporting/timeline-text/timeline-narrative.feature",
+   "fingerprint": "e072a31edcf1",
+   "human": false,
+   "rule": "timeline.text.step-entry-shows-levels-and-deploys",
+   "source": "cost_diff.py#render_timeline_entry",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_timeline_markdown_names_the_deploy_the_lag_and_the_confidence",
+   "tests": [
+    "tests/test_cost_diff.py#test_timeline_markdown_names_the_deploy_the_lag_and_the_confidence"
+   ]
+  },
+  "timeline-reporting.timeline-text.003": {
+   "file": "specs/timeline-reporting/timeline-text/timeline-narrative.feature",
+   "fingerprint": "be5e96578659",
+   "human": false,
+   "rule": "timeline.text.lag-in-readable-units",
+   "source": "cost_diff.py#_hours",
+   "status": "inferred",
+   "test": "",
+   "tests": []
+  },
+  "timeline-reporting.timeline-text.004": {
+   "file": "specs/timeline-reporting/timeline-text/timeline-narrative.feature",
+   "fingerprint": "a080c7070628",
+   "human": false,
+   "rule": "timeline.text.no-step-and-no-deploy-messages",
+   "source": "cost_diff.py#render_timeline",
+   "status": "verified",
+   "test": "tests/test_cost_diff.py#test_timeline_markdown_says_so_when_nothing_stepped",
+   "tests": [
+    "tests/test_cost_diff.py#test_timeline_markdown_says_so_when_nothing_stepped",
+    "tests/test_cost_diff.py#test_timeline_without_deploys_reports_the_step_unattributed"
+   ]
+  }
+ },
+ "taxonomy": {
+  "domains": [
+   {
+    "areas": [
+     {
+      "description": "Connecting to Cost Explorer and reporting AWS credential or API failures clearly.",
+      "slug": "aws-access",
+      "title": "AWS access"
+     },
+     {
+      "description": "Fetching per-service or per-usage-type cost for a calendar month and the month before it.",
+      "slug": "monthly-costs",
+      "title": "Monthly costs"
+     },
+     {
+      "description": "Fetching daily cost over a date range, grouped by service, usage type, account or a cost-allocation tag, with gap days filled in.",
+      "slug": "daily-costs",
+      "title": "Daily costs"
+     },
+     {
+      "description": "Choosing which cost measure is reported, such as unblended, amortized or net cost.",
+      "slug": "cost-metrics",
+      "title": "Cost metrics"
+     },
+     {
+      "description": "Keeping Cost Explorer answers on disk with a time-to-live so repeat runs skip the API.",
+      "slug": "response-cache",
+      "title": "Response cache"
+     }
+    ],
+    "description": "Getting cost figures out of AWS Cost Explorer and into a shape the reports can use.",
+    "slug": "cost-data",
+    "title": "Cost data"
+   },
+   {
+    "areas": [
+     {
+      "description": "Choosing the month to analyse and the month to compare against, e.g. last month or a given YYYY-MM.",
+      "slug": "period-selection",
+      "title": "Period selection"
+     },
+     {
+      "description": "Working out per-line cost changes, percentages and totals, then dropping small changes and keeping the top movers.",
+      "slug": "change-ranking",
+      "title": "Change ranking"
+     },
+     {
+      "description": "Flagging changes that come from months having different numbers of weekdays rather than from real spend shifts.",
+      "slug": "weekday-normalisation",
+      "title": "Weekday adjustment"
+     },
+     {
+      "description": "Breaking the biggest service changes down by usage type to explain why they moved.",
+      "slug": "usage-breakdown",
+      "title": "Usage-type drill-down"
+     },
+     {
+      "description": "Rendering the comparison as a readable table with signed dollar amounts and totals.",
+      "slug": "diff-report",
+      "title": "Diff report"
+     }
+    ],
+    "description": "The diff report that compares one month's spend with an earlier month.",
+    "slug": "period-diff",
+    "title": "Period comparison"
+   },
+   {
+    "areas": [
+     {
+      "description": "Finding level shifts in a daily series with the median/MAD method or the PELT changepoint method.",
+      "slug": "step-detection",
+      "title": "Step detection"
+     },
+     {
+      "description": "Estimating noise, ignoring steps below a minimum dollar size or sigma, and rejecting gradual ramps.",
+      "slug": "noise-and-ramps",
+      "title": "Noise and ramp filtering"
+     },
+     {
+      "description": "Pinning down the day a step started and keeping only the strongest step nearby.",
+      "slug": "onset-refinement",
+      "title": "Step onset"
+     },
+     {
+      "description": "User settings for detection method, window size, thresholds and penalty.",
+      "slug": "detection-tuning",
+      "title": "Detection tuning"
+     }
+    ],
+    "description": "Spotting lasting jumps or drops in daily cost, using explainable stdlib statistics.",
+    "slug": "cost-steps",
+    "title": "Cost step detection"
+   },
+   {
+    "areas": [
+     {
+      "description": "Reading deploys from git tags in a local repository, filtered by a tag pattern.",
+      "slug": "git-deploys",
+      "title": "Git tags"
+     },
+     {
+      "description": "Reading deploys from the GitHub Deployments API through the gh CLI.",
+      "slug": "github-deploys",
+      "title": "GitHub Deployments"
+     },
+     {
+      "description": "Reading deploys from an Argo CD application's history through the argocd CLI.",
+      "slug": "argocd-deploys",
+      "title": "Argo CD history"
+     },
+     {
+      "description": "Importing deploys from a CSV or JSON file of timestamps and labels, with validation of times and fields.",
+      "slug": "file-deploys",
+      "title": "Deploy files"
+     }
+    ],
+    "description": "Collecting the deploy events that cost steps are lined up against.",
+    "slug": "deploys",
+    "title": "Deploy history"
+   },
+   {
+    "areas": [
+     {
+      "description": "Pairing each step with the latest deploy before it inside a lag window and measuring the lag in hours.",
+      "slug": "temporal-matching",
+      "title": "Temporal matching"
+     },
+     {
+      "description": "Grading how close a match is and wording it so the report never claims a deploy caused a step.",
+      "slug": "confidence",
+      "title": "Confidence wording"
+     }
+    ],
+    "description": "Matching each cost step to the deploy that came just before it, by time only and never as cause.",
+    "slug": "attribution",
+    "title": "Deploy attribution"
+   },
+   {
+    "areas": [
+     {
+      "description": "Choosing the date range, grouping dimension and tag for the timeline, and checking the arguments.",
+      "slug": "timeline-range",
+      "title": "Timeline range and grouping"
+     },
+     {
+      "description": "A Markdown report with a headline, before/after daily levels and deploy details for each step.",
+      "slug": "timeline-text",
+      "title": "Timeline narrative"
+     },
+     {
+      "description": "ASCII or Mermaid charts of a chosen series, with deploy markers, at a chosen height.",
+      "slug": "cost-charts",
+      "title": "Cost charts"
+     },
+     {
+      "description": "A machine-readable export of the steps, deploys, attributions and data sources.",
+      "slug": "json-output",
+      "title": "JSON output"
+     }
+    ],
+    "description": "Showing detected steps and their matched deploys to people and to tools.",
+    "slug": "timeline-reporting",
+    "title": "Timeline reports"
+   },
+   {
+    "areas": [
+     {
+      "description": "Turning the period diff into Slack blocks and posting it to a webhook.",
+      "slug": "slack",
+      "title": "Slack posts"
+     },
+     {
+      "description": "Finding the PR behind a matched deploy and commenting the step on it, with repo inference and a dry-run mode.",
+      "slug": "pr-comments",
+      "title": "Pull request comments"
+     }
+    ],
+    "description": "Sending findings to the places teams already work.",
+    "slug": "sharing",
+    "title": "Notifications and sharing"
+   },
+   {
+    "areas": [
+     {
+      "description": "The timeline and diff subcommands, their options, and help text.",
+      "slug": "subcommands",
+      "title": "Subcommands and flags"
+     },
+     {
+      "description": "Still accepting old command lines with no subcommand by treating them as diff.",
+      "slug": "legacy-invocation",
+      "title": "Legacy invocation"
+     },
+     {
+      "description": "Turning failures into clear messages and the right process exit codes.",
+      "slug": "exit-and-errors",
+      "title": "Exit codes and errors"
+     }
+    ],
+    "description": "How users call the tool and how it starts up.",
+    "slug": "cli",
+    "title": "Command line"
+   },
+   {
+    "areas": [
+     {
+      "description": "A curl-pipe script that installs the CLI from GitHub with pipx, falling back to pip --user.",
+      "slug": "installer",
+      "title": "One-line installer"
+     },
+     {
+      "description": "A hardened multi-stage Docker image with hash-pinned dependencies that runs the CLI as a non-root user.",
+      "slug": "container-image",
+      "title": "Container image"
+     },
+     {
+      "description": "Make targets for setup, install, dev install, lint, format, type-check, test, build and run.",
+      "slug": "dev-workflow",
+      "title": "Developer tasks"
+     }
+    ],
+    "description": "Installing, packaging and building the CLI, and the developer workflow around it.",
+    "slug": "operations",
+    "title": "Distribution and developer tooling"
+   }
+  ]
+ }
+}
